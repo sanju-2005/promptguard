@@ -43,19 +43,38 @@
 
         <div class="card">
 
-            <h2>Risk Analysis</h2>
+    <h2>🛡️ Risk Analysis</h2>
 
-            <div class="risk">
-                {{ risk.level }}
-            </div>
+    <p>
+        Privacy Risk:
+        <strong>
+            {{ risk.privacy_score }}/100
+        </strong>
+        — {{ risk.privacy_level }}
+    </p>
 
-            <p>
-                Risk Score:
-                <strong>{{ risk.score }}/100</strong>
-            </p>
+    <p>
+        Security Risk:
+        <strong>
+            {{ risk.security_score }}/100
+        </strong>
+        — {{ risk.security_level }}
+    </p>
 
-        </div>
+    <hr>
 
+    <div class="risk">
+        {{ risk.overall_level }}
+    </div>
+
+    <p>
+        Overall Risk Score:
+        <strong>
+            {{ risk.overall_score }}/100
+        </strong>
+    </p>
+
+</div>
 
         <div class="card">
 
