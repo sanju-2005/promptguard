@@ -40,7 +40,39 @@
     {% if original %}
 
     <div class="dashboard">
+<div class="card">
 
+    <h2>🚨 Prompt Injection Analysis</h2>
+
+    {% if injection.detected %}
+
+        <p class="danger">
+            ⚠ Potential prompt injection detected.
+        </p>
+
+        <p>
+            <strong>Attack Categories:</strong>
+        </p>
+
+        <ul>
+
+            {% for category in injection.categories %}
+
+                <li>{{ category }}</li>
+
+            {% endfor %}
+
+        </ul>
+
+    {% else %}
+
+        <p>
+            ✅ No obvious prompt injection detected.
+        </p>
+
+    {% endif %}
+
+</div>
         <div class="card">
 
     <h2>🛡️ Risk Analysis</h2>
@@ -101,27 +133,7 @@
         </div>
 
 
-        <div class="card">
-
-            <h2>Prompt Injection</h2>
-
-            {% if injection.detected %}
-
-                <p class="danger">
-                    ⚠ Potential prompt injection detected.
-                </p>
-
-            {% else %}
-
-                <p>
-                    ✅ No obvious prompt injection detected.
-                </p>
-
-            {% endif %}
-
-        </div>
-
-
+        
         <div class="card">
 
             <h2>Original Prompt</h2>
