@@ -21,7 +21,6 @@ def initialize_database():
     connection.execute("""
         CREATE TABLE IF NOT EXISTS scans (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            original_prompt TEXT NOT NULL,
             masked_prompt TEXT NOT NULL,
             privacy_score INTEGER NOT NULL,
             security_score INTEGER NOT NULL,
@@ -37,7 +36,6 @@ def initialize_database():
 
 
 def save_scan(
-    original_prompt,
     masked_prompt,
     risk,
     injection_detected
@@ -48,7 +46,6 @@ def save_scan(
     connection.execute(
         """
         INSERT INTO scans (
-            original_prompt,
             masked_prompt,
             privacy_score,
             security_score,
@@ -57,10 +54,9 @@ def save_scan(
             injection_detected,
             created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
-            original_prompt,
             masked_prompt,
             risk["privacy_score"],
             risk["security_score"],

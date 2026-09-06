@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 from backend.detector import detect_sensitive_data
 from backend.masker import mask_data
@@ -26,6 +28,35 @@ app = Flask(
 
 
 # ==========================================
+# RATE LIMITING
+# ==========================================
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"]
+)
+
+
+# ==========================================
+# SECURITY HEADERS
+# ==========================================
+
+@app.after_request
+def add_security_headers(response):
+
+    response.headers["X-Content-Type-Options"] = "nosniff"
+
+    response.headers["X-Frame-Options"] = "DENY"
+
+    response.headers["Referrer-Policy"] = (
+        "strict-origin-when-cross-origin"
+    )
+
+    return response
+
+
+# ==========================================
 # DATABASE INITIALIZATION
 # ==========================================
 
@@ -45,44 +76,147 @@ MAX_PROMPT_LENGTH = 10000
 
 def analyze_prompt(prompt):
 
-    # 1. Detect sensitive information
-    detected = detect_sensitive_data(prompt)
+    # ==========================================
+    # 1. DETECT SENSITIVE INFORMATION
+    # ==========================================
 
-    # 2. Mask sensitive information
-    masked = mask_data(prompt)
+    detected = detect_sensitive_data(
+        prompt
+    )
 
-    # 3. Detect prompt injection
-    injection = detect_prompt_injection(prompt)
+
+    # ==========================================
+    # 2. MASK SENSITIVE INFORMATION
+    # ==========================================
+
+    masked = mask_data(
+        prompt
+    )
+
+
+    # ==========================================
+    # 3. DETECT PROMPT INJECTION
+    # ==========================================
+
+    injection = detect_prompt_injection(
+        prompt
+    )
 
     injection_categories = injection.get(
         "categories",
         []
     )
 
-    # 4. Calculate risk
+
+    # ==========================================
+    # 4. CALCULATE RISK
+    # ==========================================
+
     risk = analyze_risk(
         detected,
         injection_categories
     )
 
-    # 5. Make security decision
+
+    # ==========================================
+    # 5. MAKE SECURITY DECISION
+    # ==========================================
+
     decision = make_security_decision(
         risk
     )
 
-    # 6. Generate recommendations
+
+    # ==========================================
+    # 6. GENERATE RECOMMENDATIONS
+    # ==========================================
+
     suggestions = generate_suggestions(
         detected,
         injection["detected"]
     )
 
+
+    # ==========================================
+    # 7. CREATE PRIVACY-SAFE DETECTION RESULT
+    # ==========================================
+
+    # The detector internally knows the actual
+    # sensitive value.
+    #
+    # Example:
+    #
+    # password is Secret123
+    #
+    # But the actual value must NOT be exposed
+    # through the API or frontend.
+    #
+    # Therefore, only type and confidence are
+    # returned.
+
+    safe_detected = []
+
+    for item in detected:
+
+        safe_detected.append({
+            "type": item["type"],
+            "confidence": item["confidence"]
+        })
+
+
+    # ==========================================
+    # 8. REMOVE RAW VALUES FROM RISK DETAILS
+    # ==========================================
+
+    safe_detected_details = []
+
+    for item in risk["detected_details"]:
+
+        safe_detected_details.append({
+            "type": item["type"],
+            "severity": item["severity"]
+        })
+
+
+    # ==========================================
+    # 9. CREATE SAFE RISK OBJECT
+    # ==========================================
+
+    safe_risk = risk.copy()
+
+    safe_risk["detected_details"] = (
+        safe_detected_details
+    )
+
+
+    # ==========================================
+    # 10. RETURN PRIVACY-SAFE RESULT
+    # ==========================================
+
+    # IMPORTANT:
+    #
+    # We do NOT return:
+    #
+    # "original": prompt
+    #
+    # We do NOT return:
+    #
+    # item["value"]
+    #
+    # Only the masked prompt and safe metadata
+    # are returned.
+
     return {
-        "original": prompt,
         "masked": masked,
-        "detected": detected,
+
+        "detected": safe_detected,
+
         "injection": injection,
-        "risk": risk,
+
+        "risk": safe_risk,
+
         "decision": decision,
+
         "suggestions": suggestions
     }
 
@@ -94,10 +228,11 @@ def analyze_prompt(prompt):
 @app.route("/", methods=["GET", "POST"])
 def index():
 
-    # Default values for first page load
-    result = {
+    # ==========================================
+    # DEFAULT VALUES
+    # ==========================================
 
-        "original": "",
+    result = {
 
         "masked": "",
 
@@ -110,6 +245,7 @@ def index():
         },
 
         "risk": {
+
             "privacy_score": 0,
             "privacy_level": "LOW",
 
@@ -124,7 +260,9 @@ def index():
         },
 
         "decision": {
+
             "action": "ALLOW",
+
             "reason": (
                 "Enter a prompt to perform a security analysis."
             )
@@ -165,10 +303,13 @@ def index():
         if len(prompt) > MAX_PROMPT_LENGTH:
 
             result["decision"] = {
+
                 "action": "BLOCK",
+
                 "reason": (
                     f"Prompt is too long. "
-                    f"Maximum length is {MAX_PROMPT_LENGTH} characters."
+                    f"Maximum length is "
+                    f"{MAX_PROMPT_LENGTH} characters."
                 )
             }
 
@@ -183,7 +324,7 @@ def index():
 
 
         # ==========================================
-        # ANALYZE PROMPT
+        # ANALYZE SUBMITTED PROMPT
         # ==========================================
 
         result = analyze_prompt(
@@ -195,8 +336,11 @@ def index():
         # SAVE SCAN
         # ==========================================
 
+        # Only the MASKED prompt is stored.
+        #
+        # The original prompt is NOT stored.
+
         save_scan(
-            result["original"],
             result["masked"],
             result["risk"],
             result["injection"]["detected"]
@@ -213,7 +357,11 @@ def index():
 # REST API
 # ==========================================
 
-@app.route("/api/analyze", methods=["POST"])
+@app.route(
+    "/api/analyze",
+    methods=["POST"]
+)
+@limiter.limit("30 per minute")
 def api_analyze():
 
     # ==========================================
@@ -275,7 +423,8 @@ def api_analyze():
         return jsonify({
             "error": (
                 f"Prompt is too long. "
-                f"Maximum length is {MAX_PROMPT_LENGTH} characters."
+                f"Maximum length is "
+                f"{MAX_PROMPT_LENGTH} characters."
             )
         }), 413
 
@@ -293,8 +442,9 @@ def api_analyze():
     # SAVE SCAN
     # ==========================================
 
+    # Only the MASKED prompt is stored.
+
     save_scan(
-        result["original"],
         result["masked"],
         result["risk"],
         result["injection"]["detected"]
@@ -302,7 +452,7 @@ def api_analyze():
 
 
     # ==========================================
-    # RETURN RESULT
+    # RETURN PRIVACY-SAFE RESULT
     # ==========================================
 
     return jsonify(
@@ -314,11 +464,16 @@ def api_analyze():
 # HEALTH CHECK
 # ==========================================
 
-@app.route("/health", methods=["GET"])
+@app.route(
+    "/health",
+    methods=["GET"]
+)
 def health():
 
     return jsonify({
+
         "status": "healthy",
+
         "service": "PromptGuard AI"
     })
 
@@ -342,30 +497,57 @@ def history():
 # SCAN HISTORY REST API
 # ==========================================
 
-@app.route("/api/history", methods=["GET"])
+@app.route(
+    "/api/history",
+    methods=["GET"]
+)
 def api_history():
 
     scans = get_scans()
 
     history_data = []
 
+
     for scan in scans:
 
         history_data.append({
+
             "id": scan["id"],
-            "masked_prompt": scan["masked_prompt"],
-            "privacy_score": scan["privacy_score"],
-            "security_score": scan["security_score"],
-            "overall_score": scan["overall_score"],
-            "overall_level": scan["overall_level"],
+
+            "masked_prompt": (
+                scan["masked_prompt"]
+            ),
+
+            "privacy_score": (
+                scan["privacy_score"]
+            ),
+
+            "security_score": (
+                scan["security_score"]
+            ),
+
+            "overall_score": (
+                scan["overall_score"]
+            ),
+
+            "overall_level": (
+                scan["overall_level"]
+            ),
+
             "injection_detected": bool(
                 scan["injection_detected"]
             ),
-            "created_at": scan["created_at"]
+
+            "created_at": (
+                scan["created_at"]
+            )
         })
 
+
     return jsonify({
+
         "count": len(history_data),
+
         "scans": history_data
     })
 
