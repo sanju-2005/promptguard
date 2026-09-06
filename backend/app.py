@@ -18,48 +18,96 @@ app = Flask(
 def index():
 
     original = ""
+
     masked = ""
+
     detected = []
+
     injection = {
         "detected": False,
+        "categories": [],
         "matches": []
     }
+
     risk = {
-        "score": 0,
-        "level": "LOW"
+        "privacy_score": 0,
+        "privacy_level": "LOW",
+        "security_score": 0,
+        "security_level": "LOW",
+        "overall_score": 0,
+        "overall_level": "LOW"
     }
+
     suggestions = []
+
 
     if request.method == "POST":
 
-        original = request.form.get("prompt", "")
+        original = request.form.get(
+            "prompt",
+            ""
+        ).strip()
 
-        detected = detect_sensitive_data(original)
 
-        masked = mask_data(original)
+        if original:
 
-        injection = detect_prompt_injection(original)
+            # Detect sensitive information
+            detected = detect_sensitive_data(
+                original
+            )
 
-        risk = analyze_risk(
-            detected,
-            injection["detected"]
-        )
 
-        suggestions = generate_suggestions(
-            detected,
-            injection["detected"]
-        )
+            # Mask sensitive information
+            masked = mask_data(
+                original
+            )
+
+
+            # Detect prompt injection
+            injection = detect_prompt_injection(
+                original
+            )
+
+
+            # Extract attack categories
+            injection_categories = injection.get(
+                "categories",
+                []
+            )
+
+
+            # Calculate risk
+            risk = analyze_risk(
+                detected,
+                injection_categories
+            )
+
+
+            # Generate recommendations
+            suggestions = generate_suggestions(
+                detected,
+                injection["detected"]
+            )
 
     return render_template(
         "index.html",
+
         original=original,
+
         masked=masked,
+
         detected=detected,
+
         injection=injection,
+
         risk=risk,
+
         suggestions=suggestions
     )
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+
+    app.run(
+        debug=True
+    )
