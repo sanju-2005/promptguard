@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>PromptGuard AI</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🔐 PromptGuard AI</h1>
+
+    <p class="subtitle">
+        Privacy & Security Gateway for Generative AI
+    </p>
+
+    <form method="POST">
+
+        <textarea
+            name="prompt"
+            placeholder="Enter your AI prompt here..."
+            required
+        >{{ original }}</textarea>
+
+        <button type="submit">
+            Analyze Prompt
+        </button>
+
+    </form>
+
+
+    {% if original %}
+
+    <div class="dashboard">
+
+        <div class="card">
+
+            <h2>Risk Analysis</h2>
+
+            <div class="risk">
+                {{ risk.level }}
+            </div>
+
+            <p>
+                Risk Score:
+                <strong>{{ risk.score }}/100</strong>
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <h2>Detected Sensitive Data</h2>
+
+            {% if detected %}
+
+                {% for item in detected %}
+
+                <p>
+                    🔴
+                    <strong>{{ item.type }}</strong>
+                    — {{ item.value }}
+                </p>
+
+                {% endfor %}
+
+            {% else %}
+
+                <p>✅ No sensitive data detected.</p>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="card">
+
+            <h2>Prompt Injection</h2>
+
+            {% if injection.detected %}
+
+                <p class="danger">
+                    ⚠ Potential prompt injection detected.
+                </p>
+
+            {% else %}
+
+                <p>
+                    ✅ No obvious prompt injection detected.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="card">
+
+            <h2>Original Prompt</h2>
+
+            <div class="prompt">
+                {{ original }}
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h2>🛡️ Safe Prompt</h2>
+
+            <div class="prompt safe">
+                {{ masked }}
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h2>💡 Security Recommendations</h2>
+
+            {% for suggestion in suggestions %}
+
+                <p>• {{ suggestion }}</p>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+</body>
+
+</html>
