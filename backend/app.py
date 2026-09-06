@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from dotenv import load_dotenv
+import os
 
 from backend.detector import detect_sensitive_data
 from backend.masker import mask_data
@@ -14,6 +16,20 @@ from backend.database import (
     save_scan,
     get_scans
 )
+
+
+# ==========================================
+# LOAD ENVIRONMENT VARIABLES
+# ==========================================
+
+load_dotenv()
+
+API_KEY = os.getenv("PROMPTGUARD_API_KEY")
+
+if not API_KEY:
+    raise RuntimeError(
+        "PROMPTGUARD_API_KEY is not configured"
+    )
 
 
 # ==========================================
@@ -68,6 +84,25 @@ initialize_database()
 # ==========================================
 
 MAX_PROMPT_LENGTH = 10000
+
+
+# ==========================================
+# API AUTHENTICATION
+# ==========================================
+
+def authenticate_request():
+
+    provided_key = request.headers.get(
+        "X-API-Key"
+    )
+
+    if not provided_key:
+        return False
+
+    if provided_key != API_KEY:
+        return False
+
+    return True
 
 
 # ==========================================
@@ -141,19 +176,6 @@ def analyze_prompt(prompt):
     # 7. CREATE PRIVACY-SAFE DETECTION RESULT
     # ==========================================
 
-    # The detector internally knows the actual
-    # sensitive value.
-    #
-    # Example:
-    #
-    # password is Secret123
-    #
-    # But the actual value must NOT be exposed
-    # through the API or frontend.
-    #
-    # Therefore, only type and confidence are
-    # returned.
-
     safe_detected = []
 
     for item in detected:
@@ -192,19 +214,6 @@ def analyze_prompt(prompt):
     # ==========================================
     # 10. RETURN PRIVACY-SAFE RESULT
     # ==========================================
-
-    # IMPORTANT:
-    #
-    # We do NOT return:
-    #
-    # "original": prompt
-    #
-    # We do NOT return:
-    #
-    # item["value"]
-    #
-    # Only the masked prompt and safe metadata
-    # are returned.
 
     return {
         "masked": masked,
@@ -336,10 +345,6 @@ def index():
         # SAVE SCAN
         # ==========================================
 
-        # Only the MASKED prompt is stored.
-        #
-        # The original prompt is NOT stored.
-
         save_scan(
             result["masked"],
             result["risk"],
@@ -363,6 +368,17 @@ def index():
 )
 @limiter.limit("30 per minute")
 def api_analyze():
+
+    # ==========================================
+    # API AUTHENTICATION
+    # ==========================================
+
+    if not authenticate_request():
+
+        return jsonify({
+            "error": "Unauthorized"
+        }), 401
+
 
     # ==========================================
     # READ JSON REQUEST
@@ -441,8 +457,6 @@ def api_analyze():
     # ==========================================
     # SAVE SCAN
     # ==========================================
-
-    # Only the MASKED prompt is stored.
 
     save_scan(
         result["masked"],
@@ -561,3 +575,4 @@ if __name__ == "__main__":
     app.run(
         debug=False
     )
+
