@@ -73,6 +73,50 @@ def add_security_headers(response):
 
 
 # ==========================================
+# GLOBAL ERROR HANDLERS
+# ==========================================
+
+@app.errorhandler(400)
+def handle_bad_request(error):
+
+    return jsonify({
+        "error": "Bad request."
+    }), 400
+
+
+@app.errorhandler(404)
+def handle_not_found(error):
+
+    return jsonify({
+        "error": "Endpoint not found."
+    }), 404
+
+
+@app.errorhandler(405)
+def handle_method_not_allowed(error):
+
+    return jsonify({
+        "error": "HTTP method not allowed."
+    }), 405
+
+
+@app.errorhandler(413)
+def handle_payload_too_large(error):
+
+    return jsonify({
+        "error": "Request payload is too large."
+    }), 413
+
+
+@app.errorhandler(500)
+def handle_internal_error(error):
+
+    return jsonify({
+        "error": "Internal server error."
+    }), 500
+
+
+# ==========================================
 # DATABASE INITIALIZATION
 # ==========================================
 
@@ -92,9 +136,7 @@ MAX_PROMPT_LENGTH = 10000
 
 def authenticate_request():
 
-    provided_key = request.headers.get(
-        "X-API-Key"
-    )
+    provided_key = request.headers.get("X-API-Key")
 
     if not provided_key:
         return False
@@ -115,33 +157,24 @@ def analyze_prompt(prompt):
     # 1. DETECT SENSITIVE INFORMATION
     # ==========================================
 
-    detected = detect_sensitive_data(
-        prompt
-    )
-
+    detected = detect_sensitive_data(prompt)
 
     # ==========================================
     # 2. MASK SENSITIVE INFORMATION
     # ==========================================
 
-    masked = mask_data(
-        prompt
-    )
-
+    masked = mask_data(prompt)
 
     # ==========================================
     # 3. DETECT PROMPT INJECTION
     # ==========================================
 
-    injection = detect_prompt_injection(
-        prompt
-    )
+    injection = detect_prompt_injection(prompt)
 
     injection_categories = injection.get(
         "categories",
         []
     )
-
 
     # ==========================================
     # 4. CALCULATE RISK
@@ -152,15 +185,11 @@ def analyze_prompt(prompt):
         injection_categories
     )
 
-
     # ==========================================
     # 5. MAKE SECURITY DECISION
     # ==========================================
 
-    decision = make_security_decision(
-        risk
-    )
-
+    decision = make_security_decision(risk)
 
     # ==========================================
     # 6. GENERATE RECOMMENDATIONS
@@ -168,9 +197,8 @@ def analyze_prompt(prompt):
 
     suggestions = generate_suggestions(
         detected,
-        injection["detected"]
+        injection.get("detected", False)
     )
-
 
     # ==========================================
     # 7. CREATE PRIVACY-SAFE DETECTION RESULT
@@ -185,20 +213,18 @@ def analyze_prompt(prompt):
             "confidence": item["confidence"]
         })
 
-
     # ==========================================
     # 8. REMOVE RAW VALUES FROM RISK DETAILS
     # ==========================================
 
     safe_detected_details = []
 
-    for item in risk["detected_details"]:
+    for item in risk.get("detected_details", []):
 
         safe_detected_details.append({
             "type": item["type"],
             "severity": item["severity"]
         })
-
 
     # ==========================================
     # 9. CREATE SAFE RISK OBJECT
@@ -210,12 +236,14 @@ def analyze_prompt(prompt):
         safe_detected_details
     )
 
-
     # ==========================================
-    # 10. RETURN PRIVACY-SAFE RESULT
+    # 10. RETURN RESULT
     # ==========================================
 
     return {
+        # Needed by the web dashboard
+        "original": prompt,
+
         "masked": masked,
 
         "detected": safe_detected,
@@ -243,6 +271,8 @@ def index():
 
     result = {
 
+        "original": "",
+
         "masked": "",
 
         "detected": [],
@@ -254,7 +284,6 @@ def index():
         },
 
         "risk": {
-
             "privacy_score": 0,
             "privacy_level": "LOW",
 
@@ -269,17 +298,15 @@ def index():
         },
 
         "decision": {
-
             "action": "ALLOW",
-
             "reason": (
-                "Enter a prompt to perform a security analysis."
+                "Enter a prompt to perform "
+                "a security analysis."
             )
         },
 
         "suggestions": []
     }
-
 
     # ==========================================
     # PROCESS SUBMITTED PROMPT
@@ -292,7 +319,6 @@ def index():
             ""
         ).strip()
 
-
         # ==========================================
         # EMPTY PROMPT
         # ==========================================
@@ -304,17 +330,16 @@ def index():
                 **result
             )
 
-
         # ==========================================
         # PROMPT LENGTH VALIDATION
         # ==========================================
 
         if len(prompt) > MAX_PROMPT_LENGTH:
 
+            result["original"] = prompt
+
             result["decision"] = {
-
                 "action": "BLOCK",
-
                 "reason": (
                     f"Prompt is too long. "
                     f"Maximum length is "
@@ -331,15 +356,11 @@ def index():
                 **result
             )
 
-
         # ==========================================
         # ANALYZE SUBMITTED PROMPT
         # ==========================================
 
-        result = analyze_prompt(
-            prompt
-        )
-
+        result = analyze_prompt(prompt)
 
         # ==========================================
         # SAVE SCAN
@@ -351,6 +372,9 @@ def index():
             result["injection"]["detected"]
         )
 
+    # ==========================================
+    # RENDER WEB PAGE
+    # ==========================================
 
     return render_template(
         "index.html",
@@ -379,31 +403,44 @@ def api_analyze():
             "error": "Unauthorized"
         }), 401
 
-
     # ==========================================
     # READ JSON REQUEST
     # ==========================================
+
+    if not request.is_json:
+
+        return jsonify({
+            "error": "Request must contain JSON."
+        }), 400
 
     data = request.get_json(
         silent=True
     )
 
+    # ==========================================
+    # INVALID JSON
+    # ==========================================
+
+    if not isinstance(data, dict):
+
+        return jsonify({
+            "error": "Invalid JSON body."
+        }), 400
 
     # ==========================================
-    # MISSING JSON OR PROMPT
+    # MISSING PROMPT
     # ==========================================
 
-    if not data or "prompt" not in data:
+    if "prompt" not in data:
 
         return jsonify({
             "error": (
-                "Request must contain a 'prompt' field."
+                "Request must contain "
+                "a 'prompt' field."
             )
         }), 400
 
-
     prompt = data["prompt"]
-
 
     # ==========================================
     # PROMPT MUST BE A STRING
@@ -415,9 +452,7 @@ def api_analyze():
             "error": "Prompt must be a string."
         }), 400
 
-
     prompt = prompt.strip()
-
 
     # ==========================================
     # EMPTY PROMPT
@@ -428,7 +463,6 @@ def api_analyze():
         return jsonify({
             "error": "Prompt cannot be empty."
         }), 400
-
 
     # ==========================================
     # MAXIMUM PROMPT LENGTH
@@ -444,15 +478,11 @@ def api_analyze():
             )
         }), 413
 
-
     # ==========================================
     # ANALYZE PROMPT
     # ==========================================
 
-    result = analyze_prompt(
-        prompt
-    )
-
+    result = analyze_prompt(prompt)
 
     # ==========================================
     # SAVE SCAN
@@ -464,14 +494,22 @@ def api_analyze():
         result["injection"]["detected"]
     )
 
-
     # ==========================================
-    # RETURN PRIVACY-SAFE RESULT
+    # REMOVE ORIGINAL PROMPT FROM API RESPONSE
     # ==========================================
 
-    return jsonify(
-        result
+    api_result = result.copy()
+
+    api_result.pop(
+        "original",
+        None
     )
+
+    # ==========================================
+    # RETURN PRIVACY-SAFE API RESULT
+    # ==========================================
+
+    return jsonify(api_result)
 
 
 # ==========================================
@@ -485,9 +523,7 @@ def api_analyze():
 def health():
 
     return jsonify({
-
         "status": "healthy",
-
         "service": "PromptGuard AI"
     })
 
@@ -520,7 +556,6 @@ def api_history():
     scans = get_scans()
 
     history_data = []
-
 
     for scan in scans:
 
@@ -557,7 +592,6 @@ def api_history():
             )
         })
 
-
     return jsonify({
 
         "count": len(history_data),
@@ -575,4 +609,3 @@ if __name__ == "__main__":
     app.run(
         debug=False
     )
-

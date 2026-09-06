@@ -3,9 +3,9 @@ import os
 import pytest
 
 
-# ==================================================
-# PYTHON PATH
-# ==================================================
+# ==========================================
+# PROJECT ROOT
+# ==========================================
 
 sys.path.insert(
     0,
@@ -18,35 +18,45 @@ sys.path.insert(
 )
 
 
-# ==================================================
-# IMPORTS
-# ==================================================
+# ==========================================
+# IMPORT PROJECT FUNCTIONS
+# ==========================================
 
 from backend.detector import detect_sensitive_data
 from backend.masker import mask_data
 from backend.injection_detector import detect_prompt_injection
 from backend.risk_analyzer import analyze_risk
 from backend.decision_engine import make_security_decision
-from backend.app import app
+
+import backend.app as app_module
 
 
-# ==================================================
-# FLASK TEST CLIENT
-# ==================================================
+# ==========================================
+# TEST CLIENT
+# ==========================================
 
 @pytest.fixture
 def client():
 
-    app.config["TESTING"] = True
+    app_module.app.config["TESTING"] = True
 
-    with app.test_client() as client:
+    # Save the real API key
+    original_api_key = app_module.API_KEY
+
+    # Use a test-only API key
+    app_module.API_KEY = "test-api-key"
+
+    with app_module.app.test_client() as client:
 
         yield client
 
+    # Restore the real API key
+    app_module.API_KEY = original_api_key
 
-# ==================================================
+
+# ==========================================
 # SENSITIVE DATA DETECTION
-# ==================================================
+# ==========================================
 
 def test_email_detection():
 
@@ -111,9 +121,9 @@ def test_api_key_detection():
     )
 
 
-# ==================================================
+# ==========================================
 # MASKING
-# ==================================================
+# ==========================================
 
 def test_email_masking():
 
@@ -122,7 +132,6 @@ def test_email_masking():
     result = mask_data(text)
 
     assert "[EMAIL_MASKED]" in result
-
     assert "test@example.com" not in result
 
 
@@ -133,7 +142,6 @@ def test_phone_masking():
     result = mask_data(text)
 
     assert "[PHONE_MASKED]" in result
-
     assert "9876543210" not in result
 
 
@@ -144,7 +152,6 @@ def test_credit_card_masking():
     result = mask_data(text)
 
     assert "[CARD_MASKED]" in result
-
     assert "1234 5678 9012 3456" not in result
 
 
@@ -155,7 +162,6 @@ def test_password_masking():
     result = mask_data(text)
 
     assert "[PASSWORD_MASKED]" in result
-
     assert "secret123" not in result
 
 
@@ -176,9 +182,9 @@ def test_api_key_masking():
     )
 
 
-# ==================================================
-# PROMPT INJECTION DETECTION
-# ==================================================
+# ==========================================
+# PROMPT INJECTION
+# ==========================================
 
 def test_instruction_override_detection():
 
@@ -188,7 +194,10 @@ def test_instruction_override_detection():
 
     assert result["detected"] is True
 
-    assert "Instruction Override" in result["categories"]
+    assert (
+        "Instruction Override"
+        in result["categories"]
+    )
 
 
 def test_system_prompt_extraction():
@@ -199,7 +208,10 @@ def test_system_prompt_extraction():
 
     assert result["detected"] is True
 
-    assert "System Prompt Extraction" in result["categories"]
+    assert (
+        "System Prompt Extraction"
+        in result["categories"]
+    )
 
 
 def test_safety_bypass():
@@ -210,7 +222,10 @@ def test_safety_bypass():
 
     assert result["detected"] is True
 
-    assert "Safety Bypass" in result["categories"]
+    assert (
+        "Safety Bypass"
+        in result["categories"]
+    )
 
 
 def test_role_manipulation():
@@ -221,7 +236,10 @@ def test_role_manipulation():
 
     assert result["detected"] is True
 
-    assert "Role Manipulation" in result["categories"]
+    assert (
+        "Role Manipulation"
+        in result["categories"]
+    )
 
 
 def test_jailbreak_detection():
@@ -232,12 +250,18 @@ def test_jailbreak_detection():
 
     assert result["detected"] is True
 
-    assert "Jailbreak" in result["categories"]
+    assert (
+        "Jailbreak"
+        in result["categories"]
+    )
 
 
 def test_clean_prompt():
 
-    text = "Explain machine learning in simple words."
+    text = (
+        "Explain machine learning "
+        "in simple words."
+    )
 
     result = detect_prompt_injection(text)
 
@@ -246,9 +270,9 @@ def test_clean_prompt():
     assert result["categories"] == []
 
 
-# ==================================================
+# ==========================================
 # RISK ANALYSIS
-# ==================================================
+# ==========================================
 
 def test_low_risk():
 
@@ -260,7 +284,6 @@ def test_low_risk():
     )
 
     assert result["overall_score"] == 0
-
     assert result["overall_level"] == "LOW"
 
 
@@ -283,7 +306,6 @@ def test_email_phone_risk():
     )
 
     assert result["privacy_score"] == 35
-
     assert result["privacy_level"] == "MEDIUM"
 
 
@@ -306,7 +328,6 @@ def test_high_privacy_risk():
     )
 
     assert result["privacy_score"] == 75
-
     assert result["privacy_level"] == "HIGH"
 
 
@@ -318,7 +339,6 @@ def test_injection_security_risk():
     )
 
     assert result["security_score"] == 45
-
     assert result["security_level"] == "MEDIUM"
 
 
@@ -330,7 +350,6 @@ def test_jailbreak_high_risk():
     )
 
     assert result["security_score"] == 50
-
     assert result["security_level"] == "HIGH"
 
 
@@ -353,24 +372,26 @@ def test_combined_risk():
     )
 
     assert result["privacy_score"] == 40
-
     assert result["security_score"] == 45
-
     assert result["overall_score"] == 45
-
     assert result["overall_level"] == "MEDIUM"
 
 
-# ==================================================
-# FLASK API TESTS
-# ==================================================
+# ==========================================
+# API TESTS
+# ==========================================
 
 def test_api_valid_prompt(client):
 
     response = client.post(
         "/api/analyze",
+        headers={
+            "X-API-Key": "test-api-key"
+        },
         json={
-            "prompt": "Explain artificial intelligence."
+            "prompt": (
+                "Explain artificial intelligence."
+            )
         }
     )
 
@@ -378,26 +399,29 @@ def test_api_valid_prompt(client):
 
     data = response.get_json()
 
-    # Privacy check:
-    # The raw/original prompt must NOT be returned.
+    # Original prompt must NOT be returned
     assert "original" not in data
 
-    # Expected API response fields
+    # Required response fields
     assert "masked" in data
     assert "detected" in data
     assert "injection" in data
     assert "risk" in data
-    assert "suggestions" in data
     assert "decision" in data
+    assert "suggestions" in data
 
-        # Safe prompt should remain unchanged after masking
-    assert data["masked"] == "Explain artificial intelligence."
+    assert data["masked"] == (
+        "Explain artificial intelligence."
+    )
 
 
 def test_api_does_not_expose_sensitive_value(client):
 
     response = client.post(
         "/api/analyze",
+        headers={
+            "X-API-Key": "test-api-key"
+        },
         json={
             "prompt": "My password is Secret123"
         }
@@ -407,25 +431,38 @@ def test_api_does_not_expose_sensitive_value(client):
 
     data = response.get_json()
 
-    # Sensitive value must never appear in the API response
     response_text = str(data)
 
+    # Raw sensitive value must never appear
     assert "Secret123" not in response_text
-    assert "password is Secret123" not in response_text
+
+    assert (
+        "password is Secret123"
+        not in response_text
+    )
 
     # Original prompt must not be returned
     assert "original" not in data
 
-    # Prompt must be masked
-    assert data["masked"] == "My password=[PASSWORD_MASKED]"
+    # Password must be masked
+    assert data["masked"] == (
+        "My password=[PASSWORD_MASKED]"
+    )
 
-    # Password must cause BLOCK
-    assert data["decision"]["action"] == "BLOCK"
+    # Password should cause BLOCK
+    assert (
+        data["decision"]["action"]
+        == "BLOCK"
+    )
 
-    # Detection metadata must not contain the actual value
+    # Detection results must not contain
+    # raw sensitive values
     for item in data["detected"]:
+
         assert "value" not in item
 
-    # Risk details must not contain the actual value
+    # Risk details must not contain
+    # raw sensitive values
     for item in data["risk"]["detected_details"]:
+
         assert "value" not in item
