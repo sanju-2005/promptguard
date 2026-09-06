@@ -16,155 +16,290 @@
 
 <div class="container">
 
-    <h1>🔐 PromptGuard AI</h1>
+    <header>
 
-    <p class="subtitle">
-        Privacy & Security Gateway for Generative AI
-    </p>
+        <h1>🔐 PromptGuard AI</h1>
+
+        <p class="subtitle">
+            Privacy & Security Gateway for Generative AI
+        </p>
+
+        <p class="history-link">
+            <a href="/history">
+                📋 View Scan History
+            </a>
+        </p>
+
+    </header>
+
+
+    <!-- ========================= -->
+    <!-- PROMPT INPUT -->
+    <!-- ========================= -->
 
     <form method="POST">
 
+        <label for="prompt">
+            <strong>Enter your AI prompt</strong>
+        </label>
+
         <textarea
+            id="prompt"
             name="prompt"
-            placeholder="Enter your AI prompt here..."
+            placeholder="Enter a prompt containing text you want to analyze..."
             required
         >{{ original }}</textarea>
 
         <button type="submit">
-            Analyze Prompt
+            🔍 Analyze Prompt
         </button>
 
     </form>
 
 
+    <!-- ========================= -->
+    <!-- DASHBOARD -->
+    <!-- ========================= -->
+
     {% if original %}
 
     <div class="dashboard">
-<div class="card">
 
-    <h2>🚨 Prompt Injection Analysis</h2>
 
-    {% if injection.detected %}
-
-        <p class="danger">
-            ⚠ Potential prompt injection detected.
-        </p>
-
-        <p>
-            <strong>Attack Categories:</strong>
-        </p>
-
-        <ul>
-
-            {% for category in injection.categories %}
-
-                <li>{{ category }}</li>
-
-            {% endfor %}
-
-        </ul>
-
-    {% else %}
-
-        <p>
-            ✅ No obvious prompt injection detected.
-        </p>
-
-    {% endif %}
-
-</div>
-        <div class="card">
-
-    <h2>🛡️ Risk Analysis</h2>
-
-    <p>
-        Privacy Risk:
-        <strong>
-            {{ risk.privacy_score }}/100
-        </strong>
-        — {{ risk.privacy_level }}
-    </p>
-
-    <p>
-        Security Risk:
-        <strong>
-            {{ risk.security_score }}/100
-        </strong>
-        — {{ risk.security_level }}
-    </p>
-
-    <hr>
-
-    <div class="risk">
-        {{ risk.overall_level }}
-    </div>
-
-    <p>
-        Overall Risk Score:
-        <strong>
-            {{ risk.overall_score }}/100
-        </strong>
-    </p>
-
-</div>
+        <!-- ========================= -->
+        <!-- RISK SUMMARY -->
+        <!-- ========================= -->
 
         <div class="card">
 
-            <h2>Detected Sensitive Data</h2>
+            <h2>📊 Security Dashboard</h2>
 
-            {% if detected %}
+            <div class="score-grid">
 
-                {% for item in detected %}
+                <div class="score-card">
 
-                <p>
-                    🔴
-                    <strong>{{ item.type }}</strong>
-                    — {{ item.value }}
-                </p>
+                    <h3>Privacy Risk</h3>
 
-                {% endfor %}
+                    <div class="score">
+                        {{ risk.privacy_score }}
+                    </div>
+
+                    <p>
+                        {{ risk.privacy_level }}
+                    </p>
+
+                </div>
+
+
+                <div class="score-card">
+
+                    <h3>Security Risk</h3>
+
+                    <div class="score">
+                        {{ risk.security_score }}
+                    </div>
+
+                    <p>
+                        {{ risk.security_level }}
+                    </p>
+
+                </div>
+
+
+                <div class="score-card">
+
+                    <h3>Overall Risk</h3>
+
+                    <div class="score">
+                        {{ risk.overall_score }}
+                    </div>
+
+                    <p>
+                        {{ risk.overall_level }}
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- Risk Meter -->
+
+            <h3>Overall Risk Meter</h3>
+
+            <div class="risk-meter">
+
+                <div
+                    class="risk-fill
+                    {% if risk.overall_level == 'LOW' %}
+                        low
+                    {% elif risk.overall_level == 'MEDIUM' %}
+                        medium
+                    {% else %}
+                        high
+                    {% endif %}"
+                    style="width: {{ risk.overall_score }}%;"
+                ></div>
+
+            </div>
+
+            <p class="risk-score">
+
+                <strong>
+                    {{ risk.overall_score }}/100
+                </strong>
+
+                — Overall Risk
+
+            </p>
+
+        </div>
+
+
+        <!-- ========================= -->
+        <!-- INJECTION ANALYSIS -->
+        <!-- ========================= -->
+
+        <div class="card">
+
+            <h2>🚨 Prompt Injection Analysis</h2>
+
+
+            {% if injection.detected %}
+
+                <div class="alert danger">
+
+                    ⚠ Potential prompt injection detected.
+
+                </div>
+
+
+                <h3>Attack Categories</h3>
+
+                <ul>
+
+                    {% for category in injection.categories %}
+
+                        <li>
+                            {{ category }}
+                        </li>
+
+                    {% endfor %}
+
+                </ul>
 
             {% else %}
 
-                <p>✅ No sensitive data detected.</p>
+                <div class="alert safe">
+
+                    ✅ No obvious prompt injection detected.
+
+                </div>
 
             {% endif %}
 
         </div>
 
 
-        
+        <!-- ========================= -->
+        <!-- SENSITIVE DATA -->
+        <!-- ========================= -->
+
         <div class="card">
 
-            <h2>Original Prompt</h2>
+            <h2>🔎 Detected Sensitive Data</h2>
+
+
+            {% if detected %}
+
+                <ul>
+
+                    {% for item in detected %}
+
+                        <li>
+
+                            🔴
+
+                            <strong>
+                                {{ item.type }}
+                            </strong>
+
+                            —
+
+                            <code>
+                                {{ item.value }}
+                            </code>
+
+                        </li>
+
+                    {% endfor %}
+
+                </ul>
+
+            {% else %}
+
+                <p>
+                    ✅ No sensitive information detected.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- ========================= -->
+        <!-- ORIGINAL PROMPT -->
+        <!-- ========================= -->
+
+        <div class="card">
+
+            <h2>📝 Original Prompt</h2>
 
             <div class="prompt">
+
                 {{ original }}
+
             </div>
 
         </div>
 
 
-        <div class="card">
+        <!-- ========================= -->
+        <!-- SAFE PROMPT -->
+        <!-- ========================= -->
+
+        <div class="card safe-card">
 
             <h2>🛡️ Safe Prompt</h2>
 
-            <div class="prompt safe">
+            <div class="prompt">
+
                 {{ masked }}
+
             </div>
 
         </div>
 
+
+        <!-- ========================= -->
+        <!-- RECOMMENDATIONS -->
+        <!-- ========================= -->
 
         <div class="card">
 
             <h2>💡 Security Recommendations</h2>
 
-            {% for suggestion in suggestions %}
+            <ul>
 
-                <p>• {{ suggestion }}</p>
+                {% for suggestion in suggestions %}
 
-            {% endfor %}
+                    <li>
+                        {{ suggestion }}
+                    </li>
+
+                {% endfor %}
+
+            </ul>
 
         </div>
 

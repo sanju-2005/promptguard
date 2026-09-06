@@ -1,107 +1,401 @@
+/* ========================= */
+/* GLOBAL */
+/* ========================= */
+
 body {
+
     font-family: Arial, sans-serif;
+
     background: #f4f6f9;
+
     margin: 0;
+
     padding: 30px;
+
+    color: #1f2937;
 }
 
+
 .container {
+
     max-width: 1000px;
+
     margin: auto;
 }
 
-h1 {
+
+/* ========================= */
+/* HEADER */
+/* ========================= */
+
+header {
+
     text-align: center;
-    margin-bottom: 5px;
+
+    margin-bottom: 25px;
 }
+
+
+h1 {
+
+    margin-bottom: 5px;
+
+    font-size: 36px;
+}
+
 
 .subtitle {
-    text-align: center;
-    color: #666;
+
+    color: #6b7280;
+
+    font-size: 16px;
 }
+
+
+.history-link {
+
+    margin-top: 15px;
+}
+
+
+a {
+
+    color: #2563eb;
+
+    text-decoration: none;
+
+    font-weight: bold;
+}
+
+
+a:hover {
+
+    text-decoration: underline;
+}
+
+
+/* ========================= */
+/* FORM */
+/* ========================= */
 
 form {
+
     background: white;
+
     padding: 25px;
-    border-radius: 12px;
+
+    border-radius: 14px;
+
     margin-top: 25px;
+
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
 }
+
 
 textarea {
+
     width: 100%;
+
     height: 150px;
+
     padding: 15px;
+
     box-sizing: border-box;
-    border: 1px solid #ccc;
+
+    border: 1px solid #d1d5db;
+
     border-radius: 8px;
+
     resize: vertical;
+
+    margin-top: 10px;
+
+    font-size: 15px;
 }
+
+
+textarea:focus {
+
+    outline: none;
+
+    border-color: #2563eb;
+}
+
 
 button {
+
     margin-top: 15px;
-    padding: 12px 25px;
+
+    padding: 13px 28px;
+
     border: none;
+
     border-radius: 8px;
+
     background: #2563eb;
+
     color: white;
+
     cursor: pointer;
+
+    font-size: 15px;
+
+    font-weight: bold;
 }
 
+
+button:hover {
+
+    background: #1d4ed8;
+}
+
+
+/* ========================= */
+/* DASHBOARD */
+/* ========================= */
+
 .dashboard {
+
     margin-top: 25px;
 }
 
+
 .card {
+
     background: white;
-    padding: 20px;
+
+    padding: 22px;
+
     margin-bottom: 20px;
+
+    border-radius: 14px;
+
+    box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+}
+
+
+.card h2 {
+
+    margin-top: 0;
+}
+
+
+/* ========================= */
+/* SCORE CARDS */
+/* ========================= */
+
+.score-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 15px;
+
+    margin-top: 20px;
+}
+
+
+.score-card {
+
+    background: #f8fafc;
+
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+    padding: 20px;
+
+    text-align: center;
+
+    border: 1px solid #e5e7eb;
 }
 
-.risk {
-    font-size: 28px;
+
+.score-card h3 {
+
+    margin-top: 0;
+
+    font-size: 16px;
+}
+
+
+.score {
+
+    font-size: 38px;
+
+    font-weight: bold;
+
+    margin: 10px 0;
+}
+
+
+.score-card p {
+
     font-weight: bold;
 }
 
-.prompt {
-    background: #f1f5f9;
-    padding: 15px;
-    border-radius: 8px;
-    white-space: pre-wrap;
-}
 
-.safe {
-    border-left: 5px solid #22c55e;
-}
+/* ========================= */
+/* RISK METER */
+/* ========================= */
 
-.danger {
-    font-weight: bold;
-}
 .risk-meter {
+
     width: 100%;
-    height: 18px;
+
+    height: 22px;
+
     background: #e5e7eb;
-    border-radius: 10px;
+
+    border-radius: 12px;
+
     overflow: hidden;
+
     margin-top: 10px;
 }
 
+
 .risk-fill {
+
     height: 100%;
-    width: 0%;
-    border-radius: 10px;
-    transition: width 0.5s ease;
+
+    border-radius: 12px;
+
+    transition: width 0.6s ease;
 }
 
+
 .low {
+
     background: #22c55e;
 }
 
+
 .medium {
+
     background: #f59e0b;
 }
 
+
 .high {
+
     background: #ef4444;
+}
+
+
+.risk-score {
+
+    text-align: center;
+
+    font-size: 16px;
+}
+
+
+/* ========================= */
+/* ALERTS */
+/* ========================= */
+
+.alert {
+
+    padding: 15px;
+
+    border-radius: 8px;
+
+    font-weight: bold;
+}
+
+
+.alert.safe {
+
+    background: #dcfce7;
+
+    color: #166534;
+}
+
+
+.alert.danger {
+
+    background: #fee2e2;
+
+    color: #991b1b;
+}
+
+
+/* ========================= */
+/* PROMPTS */
+/* ========================= */
+
+.prompt {
+
+    background: #f1f5f9;
+
+    padding: 15px;
+
+    border-radius: 8px;
+
+    white-space: pre-wrap;
+
+    word-wrap: break-word;
+}
+
+
+.safe-card {
+
+    border-left: 5px solid #22c55e;
+}
+
+
+code {
+
+    background: #f1f5f9;
+
+    padding: 3px 6px;
+
+    border-radius: 5px;
+}
+
+
+/* ========================= */
+/* HISTORY */
+/* ========================= */
+
+.history-item {
+
+    padding: 10px 0;
+}
+
+
+.history-item hr {
+
+    border: none;
+
+    border-top: 1px solid #e5e7eb;
+
+    margin-top: 20px;
+}
+
+
+/* ========================= */
+/* RESPONSIVE */
+/* ========================= */
+
+@media (max-width: 700px) {
+
+    body {
+
+        padding: 15px;
+    }
+
+
+    .score-grid {
+
+        grid-template-columns: 1fr;
+    }
+
+
+    h1 {
+
+        font-size: 28px;
+    }
+
 }

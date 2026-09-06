@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>PromptGuard - Scan History</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🔐 PromptGuard AI</h1>
+
+    <p class="subtitle">
+        Security Scan History
+    </p>
+
+    <p>
+        <a href="/">← Back to Analyzer</a>
+    </p>
+
+    <div class="card">
+
+        <h2>Previous Scans</h2>
+
+        {% if scans %}
+
+            {% for scan in scans %}
+
+                <div class="history-item">
+
+                    <p>
+                        <strong>
+                            Scan #{{ scan.id }}
+                        </strong>
+                    </p>
+
+                    <p>
+                        Risk:
+                        <strong>
+                            {{ scan.overall_score }}/100
+                        </strong>
+                        — {{ scan.overall_level }}
+                    </p>
+
+                    <p>
+                        Privacy:
+                        {{ scan.privacy_score }}/100
+                    </p>
+
+                    <p>
+                        Security:
+                        {{ scan.security_score }}/100
+                    </p>
+
+                    <p>
+                        Injection:
+
+                        {% if scan.injection_detected %}
+
+                            ⚠ Detected
+
+                        {% else %}
+
+                            ✅ Not detected
+
+                        {% endif %}
+
+                    </p>
+
+                    <p>
+                        Time:
+                        {{ scan.created_at }}
+                    </p>
+
+                    <hr>
+
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <p>No scans recorded yet.</p>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+</body>
+
+</html>
