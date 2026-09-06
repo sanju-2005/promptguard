@@ -16,6 +16,10 @@
 
 <div class="container">
 
+    <!-- ============================== -->
+    <!-- HEADER -->
+    <!-- ============================== -->
+
     <header>
 
         <h1>🔐 PromptGuard AI</h1>
@@ -32,6 +36,10 @@
 
     </header>
 
+
+    <!-- ============================== -->
+    <!-- PROMPT INPUT -->
+    <!-- ============================== -->
 
     <form method="POST">
 
@@ -59,7 +67,7 @@
 
 
         <!-- ============================== -->
-        <!-- RISK DASHBOARD -->
+        <!-- SECURITY DASHBOARD -->
         <!-- ============================== -->
 
         <div class="card">
@@ -115,6 +123,8 @@
             </div>
 
 
+            <!-- Risk Meter -->
+
             <h3>Overall Risk Meter</h3>
 
             <div class="risk-meter">
@@ -148,12 +158,60 @@
 
 
         <!-- ============================== -->
-        <!-- PROMPT INJECTION -->
+        <!-- SECURITY DECISION -->
+        <!-- ============================== -->
+
+        <div class="card">
+
+            <h2>🛡️ Security Decision</h2>
+
+            <div
+                class="decision
+                {% if decision.action == 'ALLOW' %}
+                    decision-allow
+                {% elif decision.action == 'SANITIZE' %}
+                    decision-sanitize
+                {% else %}
+                    decision-block
+                {% endif %}"
+            >
+
+                <div class="decision-action">
+
+                    {% if decision.action == 'ALLOW' %}
+
+                        🟢 ALLOW
+
+                    {% elif decision.action == 'SANITIZE' %}
+
+                        🟡 SANITIZE
+
+                    {% else %}
+
+                        🔴 BLOCK
+
+                    {% endif %}
+
+                </div>
+
+
+                <p>
+                    {{ decision.reason }}
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- ============================== -->
+        <!-- PROMPT INJECTION ANALYSIS -->
         <!-- ============================== -->
 
         <div class="card">
 
             <h2>🚨 Prompt Injection Analysis</h2>
+
 
             {% if injection.detected %}
 
@@ -165,6 +223,7 @@
 
 
                 <h3>Attack Categories</h3>
+
 
                 <ul>
 
@@ -178,8 +237,9 @@
 
                             —
 
-                            <span class="severity
-                                {{ item.severity|lower }}">
+                            <span
+                                class="severity {{ item.severity|lower }}"
+                            >
                                 {{ item.severity }}
                             </span>
 
@@ -188,6 +248,7 @@
                     {% endfor %}
 
                 </ul>
+
 
             {% else %}
 
@@ -209,6 +270,7 @@
         <div class="card">
 
             <h2>🔎 Detected Sensitive Data</h2>
+
 
             {% if risk.detected_details %}
 
@@ -232,8 +294,9 @@
 
                             —
 
-                            <span class="severity
-                                {{ item.severity|lower }}">
+                            <span
+                                class="severity {{ item.severity|lower }}"
+                            >
                                 {{ item.severity }}
                             </span>
 
@@ -242,6 +305,7 @@
                     {% endfor %}
 
                 </ul>
+
 
             {% else %}
 
@@ -285,7 +349,7 @@
 
 
         <!-- ============================== -->
-        <!-- RECOMMENDATIONS -->
+        <!-- SECURITY RECOMMENDATIONS -->
         <!-- ============================== -->
 
         <div class="card">
@@ -305,6 +369,7 @@
             </ul>
 
         </div>
+
 
     </div>
 

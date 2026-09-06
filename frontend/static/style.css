@@ -430,3 +430,40 @@ code {
     background: #7f1d1d;
     color: white;
 }
+/* Security Decision */
+
+.decision {
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 2px solid;
+}
+
+.decision-action {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.decision p {
+    margin: 0;
+    font-size: 15px;
+}
+
+.decision-allow {
+    background: #dcfce7;
+    border-color: #22c55e;
+    color: #166534;
+}
+
+.decision-sanitize {
+    background: #fef3c7;
+    border-color: #f59e0b;
+    color: #92400e;
+}
+
+.decision-block {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
+}

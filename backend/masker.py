@@ -18,11 +18,6 @@ MASKS = {
         "[CARD_MASKED]"
     ),
 
-    "bank_account": (
-        r"\b\d{9,18}\b",
-        "[BANK_ACCOUNT_MASKED]"
-    ),
-
     "api_key": (
         r"\b(?:"
         r"sk-[A-Za-z0-9_-]{20,}|"
@@ -58,6 +53,21 @@ MASKS = {
         r"(?i)\b(?:password|passwd|pwd)\b"
         r"\s*(?:is|:|=)\s*\S+",
         "password=[PASSWORD_MASKED]"
+    ),
+
+    "bank_account": (
+        r"(?i)\b(?:"
+        r"bank\s+account"
+        r"|account\s+number"
+        r"|account\s+no"
+        r"|a/c"
+        r"|ac\s+no"
+        r")"
+        r"\s*(?:number|no\.?)?"
+        r"\s*(?:is|:|=|-)?"
+        r"\s*"
+        r"\d{9,18}\b",
+        "[BANK_ACCOUNT_MASKED]"
     )
 }
 

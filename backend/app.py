@@ -1,9 +1,11 @@
 from flask import Flask, render_template, request, jsonify
+
 from backend.detector import detect_sensitive_data
 from backend.masker import mask_data
 from backend.risk_analyzer import analyze_risk
 from backend.injection_detector import detect_prompt_injection
 from backend.suggestions import generate_suggestions
+from backend.decision_engine import make_security_decision
 
 from backend.database import (
     initialize_database,
@@ -19,16 +21,19 @@ app = Flask(
 )
 
 
-# Initialize SQLite database when application starts
+# Initialize database when application starts
 initialize_database()
 
 
 def analyze_prompt(prompt):
 
+    # 1. Detect sensitive information
     detected = detect_sensitive_data(prompt)
 
+    # 2. Mask sensitive information
     masked = mask_data(prompt)
 
+    # 3. Detect prompt injection
     injection = detect_prompt_injection(prompt)
 
     injection_categories = injection.get(
@@ -36,11 +41,18 @@ def analyze_prompt(prompt):
         []
     )
 
+    # 4. Calculate risk
     risk = analyze_risk(
         detected,
         injection_categories
     )
 
+    # 5. Make security decision
+    decision = make_security_decision(
+        risk
+    )
+
+    # 6. Generate recommendations
     suggestions = generate_suggestions(
         detected,
         injection["detected"]
@@ -52,19 +64,25 @@ def analyze_prompt(prompt):
         "detected": detected,
         "injection": injection,
         "risk": risk,
+        "decision": decision,
         "suggestions": suggestions
     }
 
-# --------------------------------------------------
-# HOME PAGE
-# --------------------------------------------------
+
+# ==========================================
+# MAIN WEB PAGE
+# ==========================================
 
 @app.route("/", methods=["GET", "POST"])
 def index():
 
+    # Default values for first page load
     result = {
+
         "original": "",
+
         "masked": "",
+
         "detected": [],
 
         "injection": {
@@ -81,13 +99,25 @@ def index():
             "security_level": "LOW",
 
             "overall_score": 0,
-            "overall_level": "LOW"
+            "overall_level": "LOW",
+
+            "detected_details": [],
+            "injection_details": []
+        },
+
+        # IMPORTANT:
+        # This prevents Jinja from saying
+        # "decision is undefined"
+        "decision": {
+            "action": "ALLOW",
+            "reason": "Enter a prompt to perform a security analysis."
         },
 
         "suggestions": []
     }
 
 
+    # If user submitted a prompt
     if request.method == "POST":
 
         prompt = request.form.get(
@@ -98,10 +128,12 @@ def index():
 
         if prompt:
 
-            result = analyze_prompt(prompt)
+            result = analyze_prompt(
+                prompt
+            )
 
 
-            # Save scan to SQLite database
+            # Save scan to database
             save_scan(
                 result["original"],
                 result["masked"],
@@ -116,9 +148,9 @@ def index():
     )
 
 
-# --------------------------------------------------
+# ==========================================
 # REST API
-# --------------------------------------------------
+# ==========================================
 
 @app.route("/api/analyze", methods=["POST"])
 def api_analyze():
@@ -128,6 +160,7 @@ def api_analyze():
     )
 
 
+    # Missing JSON or prompt
     if not data or "prompt" not in data:
 
         return jsonify({
@@ -138,6 +171,7 @@ def api_analyze():
     prompt = data["prompt"]
 
 
+    # Prompt must be a string
     if not isinstance(prompt, str):
 
         return jsonify({
@@ -148,6 +182,7 @@ def api_analyze():
     prompt = prompt.strip()
 
 
+    # Empty prompt
     if not prompt:
 
         return jsonify({
@@ -155,10 +190,13 @@ def api_analyze():
         }), 400
 
 
-    result = analyze_prompt(prompt)
+    # Analyze prompt
+    result = analyze_prompt(
+        prompt
+    )
 
 
-    # Save API scan to database
+    # Save scan
     save_scan(
         result["original"],
         result["masked"],
@@ -167,12 +205,14 @@ def api_analyze():
     )
 
 
-    return jsonify(result)
+    return jsonify(
+        result
+    )
 
 
-# --------------------------------------------------
+# ==========================================
 # SCAN HISTORY
-# --------------------------------------------------
+# ==========================================
 
 @app.route("/history")
 def history():
@@ -185,9 +225,9 @@ def history():
     )
 
 
-# --------------------------------------------------
-# START APPLICATION
-# --------------------------------------------------
+# ==========================================
+# APPLICATION START
+# ==========================================
 
 if __name__ == "__main__":
 

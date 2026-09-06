@@ -3,10 +3,6 @@ import re
 
 PATTERNS = {
 
-    # ==============================
-    # PERSONAL INFORMATION
-    # ==============================
-
     "email": (
         r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
     ),
@@ -15,21 +11,9 @@ PATTERNS = {
         r"\b(?:\+91[-\s]?)?[6-9]\d{9}\b"
     ),
 
-    # ==============================
-    # FINANCIAL INFORMATION
-    # ==============================
-
     "credit_card": (
         r"\b(?:\d{4}[-\s]?){3}\d{4}\b"
     ),
-
-    "bank_account": (
-        r"\b\d{9,18}\b"
-    ),
-
-    # ==============================
-    # AUTHENTICATION / SECRETS
-    # ==============================
 
     "password": (
         r"(?i)\b(?:password|passwd|pwd)\b"
@@ -51,10 +35,6 @@ PATTERNS = {
         r"[A-Za-z0-9_-]+\b"
     ),
 
-    # ==============================
-    # NETWORK INFORMATION
-    # ==============================
-
     "ip_address": (
         r"\b(?:"
         r"(?:25[0-5]|2[0-4]\d|1?\d?\d)\."
@@ -63,19 +43,38 @@ PATTERNS = {
         r"\b"
     ),
 
-    # ==============================
-    # GOVERNMENT ID
-    # ==============================
-
     "aadhaar": (
         r"\b\d{4}[-\s]\d{4}[-\s]\d{4}\b"
     )
 }
 
 
+# ==========================================
+# BANK ACCOUNT CONTEXT PATTERN
+# ==========================================
+
+BANK_ACCOUNT_PATTERN = (
+    r"(?i)\b(?:"
+    r"bank\s+account"
+    r"|account\s+number"
+    r"|account\s+no"
+    r"|a/c"
+    r"|ac\s+no"
+    r")"
+    r"\s*(?:number|no\.?)?"
+    r"\s*(?:is|:|=|-)?"
+    r"\s*"
+    r"(\d{9,18})\b"
+)
+
+
 def detect_sensitive_data(text):
 
     detected = []
+
+    # ======================================
+    # STANDARD PATTERNS
+    # ======================================
 
     for data_type, pattern in PATTERNS.items():
 
@@ -88,7 +87,27 @@ def detect_sensitive_data(text):
 
             detected.append({
                 "type": data_type,
-                "value": match
+                "value": match,
+                "confidence": "HIGH"
             })
+
+
+    # ======================================
+    # BANK ACCOUNT
+    # ======================================
+
+    bank_matches = re.findall(
+        BANK_ACCOUNT_PATTERN,
+        text
+    )
+
+    for match in bank_matches:
+
+        detected.append({
+            "type": "bank_account",
+            "value": match,
+            "confidence": "HIGH"
+        })
+
 
     return detected
