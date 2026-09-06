@@ -208,11 +208,23 @@ def api_analyze():
     return jsonify(
         result
     )
+# ==========================================
+# HEALTH CHECK
+# ==========================================
 
+@app.route("/health", methods=["GET"])
+def health():
+
+    return jsonify({
+        "status": "healthy",
+        "service": "PromptGuard AI"
+    })
 
 # ==========================================
 # SCAN HISTORY
 # ==========================================
+
+
 
 @app.route("/history")
 def history():

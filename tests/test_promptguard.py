@@ -734,3 +734,19 @@ def test_api_returns_block_for_jailbreak(client):
     assert "decision" in data
 
     assert data["decision"]["action"] == "BLOCK"
+
+
+# ==================================================
+# HEALTH CHECK TEST
+# ==================================================
+
+def test_health_endpoint(client):
+
+    response = client.get("/health")
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "healthy"
+    assert data["service"] == "PromptGuard AI"
