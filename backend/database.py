@@ -1,16 +1,16 @@
 import sqlite3
 from datetime import datetime
+from pathlib import Path
 
 
-DATABASE = "promptguard.db"
+# Always store the database in the project root
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATABASE = BASE_DIR / "promptguard.db"
 
 
 def get_connection():
-
     connection = sqlite3.connect(DATABASE)
-
     connection.row_factory = sqlite3.Row
-
     return connection
 
 
@@ -33,7 +33,6 @@ def initialize_database():
     """)
 
     connection.commit()
-
     connection.close()
 
 
@@ -73,7 +72,6 @@ def save_scan(
     )
 
     connection.commit()
-
     connection.close()
 
 

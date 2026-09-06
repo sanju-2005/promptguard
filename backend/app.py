@@ -134,7 +134,10 @@ def index():
     }
 
 
-    # Process submitted prompt
+    # ==========================================
+    # PROCESS SUBMITTED PROMPT
+    # ==========================================
+
     if request.method == "POST":
 
         prompt = request.form.get(
@@ -143,7 +146,10 @@ def index():
         ).strip()
 
 
-        # Empty prompt
+        # ==========================================
+        # EMPTY PROMPT
+        # ==========================================
+
         if not prompt:
 
             return render_template(
@@ -152,7 +158,10 @@ def index():
             )
 
 
-        # Prompt length validation
+        # ==========================================
+        # PROMPT LENGTH VALIDATION
+        # ==========================================
+
         if len(prompt) > MAX_PROMPT_LENGTH:
 
             result["decision"] = {
@@ -173,13 +182,19 @@ def index():
             )
 
 
-        # Analyze prompt
+        # ==========================================
+        # ANALYZE PROMPT
+        # ==========================================
+
         result = analyze_prompt(
             prompt
         )
 
 
-        # Save scan
+        # ==========================================
+        # SAVE SCAN
+        # ==========================================
+
         save_scan(
             result["original"],
             result["masked"],
@@ -201,13 +216,19 @@ def index():
 @app.route("/api/analyze", methods=["POST"])
 def api_analyze():
 
-    # Read JSON request
+    # ==========================================
+    # READ JSON REQUEST
+    # ==========================================
+
     data = request.get_json(
         silent=True
     )
 
 
-    # Missing JSON or prompt
+    # ==========================================
+    # MISSING JSON OR PROMPT
+    # ==========================================
+
     if not data or "prompt" not in data:
 
         return jsonify({
@@ -220,7 +241,10 @@ def api_analyze():
     prompt = data["prompt"]
 
 
-    # Prompt must be a string
+    # ==========================================
+    # PROMPT MUST BE A STRING
+    # ==========================================
+
     if not isinstance(prompt, str):
 
         return jsonify({
@@ -231,7 +255,10 @@ def api_analyze():
     prompt = prompt.strip()
 
 
-    # Empty prompt
+    # ==========================================
+    # EMPTY PROMPT
+    # ==========================================
+
     if not prompt:
 
         return jsonify({
@@ -239,7 +266,10 @@ def api_analyze():
         }), 400
 
 
-    # Maximum prompt length
+    # ==========================================
+    # MAXIMUM PROMPT LENGTH
+    # ==========================================
+
     if len(prompt) > MAX_PROMPT_LENGTH:
 
         return jsonify({
@@ -250,13 +280,19 @@ def api_analyze():
         }), 413
 
 
-    # Analyze prompt
+    # ==========================================
+    # ANALYZE PROMPT
+    # ==========================================
+
     result = analyze_prompt(
         prompt
     )
 
 
-    # Save scan
+    # ==========================================
+    # SAVE SCAN
+    # ==========================================
+
     save_scan(
         result["original"],
         result["masked"],
@@ -264,6 +300,10 @@ def api_analyze():
         result["injection"]["detected"]
     )
 
+
+    # ==========================================
+    # RETURN RESULT
+    # ==========================================
 
     return jsonify(
         result
@@ -284,7 +324,7 @@ def health():
 
 
 # ==========================================
-# SCAN HISTORY
+# SCAN HISTORY WEB PAGE
 # ==========================================
 
 @app.route("/history")
@@ -299,11 +339,43 @@ def history():
 
 
 # ==========================================
+# SCAN HISTORY REST API
+# ==========================================
+
+@app.route("/api/history", methods=["GET"])
+def api_history():
+
+    scans = get_scans()
+
+    history_data = []
+
+    for scan in scans:
+
+        history_data.append({
+            "id": scan["id"],
+            "masked_prompt": scan["masked_prompt"],
+            "privacy_score": scan["privacy_score"],
+            "security_score": scan["security_score"],
+            "overall_score": scan["overall_score"],
+            "overall_level": scan["overall_level"],
+            "injection_detected": bool(
+                scan["injection_detected"]
+            ),
+            "created_at": scan["created_at"]
+        })
+
+    return jsonify({
+        "count": len(history_data),
+        "scans": history_data
+    })
+
+
+# ==========================================
 # APPLICATION START
 # ==========================================
 
 if __name__ == "__main__":
 
     app.run(
-        debug=True
+        debug=False
     )
