@@ -1,21 +1,76 @@
 PRIVACY_WEIGHTS = {
+
     "email": 15,
+
     "phone": 20,
+
     "credit_card": 35,
+
+    "bank_account": 35,
+
     "password": 40,
+
     "api_key": 40,
+
     "jwt": 35,
-    "ip_address": 10
+
+    "ip_address": 10,
+
+    "aadhaar": 40
+}
+
+
+PRIVACY_SEVERITY = {
+
+    "email": "LOW",
+
+    "phone": "MEDIUM",
+
+    "credit_card": "HIGH",
+
+    "bank_account": "HIGH",
+
+    "password": "CRITICAL",
+
+    "api_key": "CRITICAL",
+
+    "jwt": "HIGH",
+
+    "ip_address": "LOW",
+
+    "aadhaar": "CRITICAL"
 }
 
 
 INJECTION_WEIGHTS = {
+
     "Instruction Override": 30,
+
     "System Prompt Extraction": 35,
+
     "Safety Bypass": 45,
+
     "Developer Instruction Manipulation": 40,
+
     "Role Manipulation": 30,
+
     "Jailbreak": 50
+}
+
+
+INJECTION_SEVERITY = {
+
+    "Instruction Override": "MEDIUM",
+
+    "System Prompt Extraction": "HIGH",
+
+    "Safety Bypass": "HIGH",
+
+    "Developer Instruction Manipulation": "HIGH",
+
+    "Role Manipulation": "MEDIUM",
+
+    "Jailbreak": "CRITICAL"
 }
 
 
@@ -40,9 +95,9 @@ def analyze_risk(
         injection_categories = []
 
 
-    # -------------------------
+    # =====================================
     # PRIVACY RISK
-    # -------------------------
+    # =====================================
 
     privacy_score = 0
 
@@ -59,9 +114,9 @@ def analyze_risk(
     )
 
 
-    # -------------------------
-    # SECURITY RISK
-    # -------------------------
+    # =====================================
+    # SECURITY / INJECTION RISK
+    # =====================================
 
     security_score = 0
 
@@ -78,14 +133,51 @@ def analyze_risk(
     )
 
 
-    # -------------------------
+    # =====================================
     # OVERALL RISK
-    # -------------------------
+    # =====================================
 
     overall_score = max(
         privacy_score,
         security_score
     )
+
+
+    # =====================================
+    # DETECTION SEVERITY
+    # =====================================
+
+    detected_details = []
+
+    for item in detected:
+
+        data_type = item["type"]
+
+        detected_details.append({
+            "type": data_type,
+            "value": item["value"],
+            "severity": PRIVACY_SEVERITY.get(
+                data_type,
+                "MEDIUM"
+            )
+        })
+
+
+    # =====================================
+    # INJECTION SEVERITY
+    # =====================================
+
+    injection_details = []
+
+    for category in injection_categories:
+
+        injection_details.append({
+            "category": category,
+            "severity": INJECTION_SEVERITY.get(
+                category,
+                "MEDIUM"
+            )
+        })
 
 
     return {
@@ -106,5 +198,9 @@ def analyze_risk(
 
         "overall_level": calculate_risk_level(
             overall_score
-        )
+        ),
+
+        "detected_details": detected_details,
+
+        "injection_details": injection_details
     }

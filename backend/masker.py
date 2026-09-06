@@ -18,6 +18,11 @@ MASKS = {
         "[CARD_MASKED]"
     ),
 
+    "bank_account": (
+        r"\b\d{9,18}\b",
+        "[BANK_ACCOUNT_MASKED]"
+    ),
+
     "api_key": (
         r"\b(?:"
         r"sk-[A-Za-z0-9_-]{20,}|"
@@ -42,6 +47,11 @@ MASKS = {
         r"(?:25[0-5]|2[0-4]\d|1?\d?\d)"
         r"\b",
         "[IP_MASKED]"
+    ),
+
+    "aadhaar": (
+        r"\b\d{4}[-\s]\d{4}[-\s]\d{4}\b",
+        "[AADHAAR_MASKED]"
     ),
 
     "password": (

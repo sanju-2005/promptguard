@@ -33,10 +33,6 @@
     </header>
 
 
-    <!-- ========================= -->
-    <!-- PROMPT INPUT -->
-    <!-- ========================= -->
-
     <form method="POST">
 
         <label for="prompt">
@@ -57,18 +53,14 @@
     </form>
 
 
-    <!-- ========================= -->
-    <!-- DASHBOARD -->
-    <!-- ========================= -->
-
     {% if original %}
 
     <div class="dashboard">
 
 
-        <!-- ========================= -->
-        <!-- RISK SUMMARY -->
-        <!-- ========================= -->
+        <!-- ============================== -->
+        <!-- RISK DASHBOARD -->
+        <!-- ============================== -->
 
         <div class="card">
 
@@ -123,8 +115,6 @@
             </div>
 
 
-            <!-- Risk Meter -->
-
             <h3>Overall Risk Meter</h3>
 
             <div class="risk-meter">
@@ -143,6 +133,7 @@
 
             </div>
 
+
             <p class="risk-score">
 
                 <strong>
@@ -156,14 +147,13 @@
         </div>
 
 
-        <!-- ========================= -->
-        <!-- INJECTION ANALYSIS -->
-        <!-- ========================= -->
+        <!-- ============================== -->
+        <!-- PROMPT INJECTION -->
+        <!-- ============================== -->
 
         <div class="card">
 
             <h2>🚨 Prompt Injection Analysis</h2>
-
 
             {% if injection.detected %}
 
@@ -178,10 +168,21 @@
 
                 <ul>
 
-                    {% for category in injection.categories %}
+                    {% for item in risk.injection_details %}
 
                         <li>
-                            {{ category }}
+
+                            <strong>
+                                {{ item.category }}
+                            </strong>
+
+                            —
+
+                            <span class="severity
+                                {{ item.severity|lower }}">
+                                {{ item.severity }}
+                            </span>
+
                         </li>
 
                     {% endfor %}
@@ -201,20 +202,19 @@
         </div>
 
 
-        <!-- ========================= -->
+        <!-- ============================== -->
         <!-- SENSITIVE DATA -->
-        <!-- ========================= -->
+        <!-- ============================== -->
 
         <div class="card">
 
             <h2>🔎 Detected Sensitive Data</h2>
 
-
-            {% if detected %}
+            {% if risk.detected_details %}
 
                 <ul>
 
-                    {% for item in detected %}
+                    {% for item in risk.detected_details %}
 
                         <li>
 
@@ -229,6 +229,13 @@
                             <code>
                                 {{ item.value }}
                             </code>
+
+                            —
+
+                            <span class="severity
+                                {{ item.severity|lower }}">
+                                {{ item.severity }}
+                            </span>
 
                         </li>
 
@@ -247,43 +254,39 @@
         </div>
 
 
-        <!-- ========================= -->
+        <!-- ============================== -->
         <!-- ORIGINAL PROMPT -->
-        <!-- ========================= -->
+        <!-- ============================== -->
 
         <div class="card">
 
             <h2>📝 Original Prompt</h2>
 
             <div class="prompt">
-
                 {{ original }}
-
             </div>
 
         </div>
 
 
-        <!-- ========================= -->
+        <!-- ============================== -->
         <!-- SAFE PROMPT -->
-        <!-- ========================= -->
+        <!-- ============================== -->
 
         <div class="card safe-card">
 
             <h2>🛡️ Safe Prompt</h2>
 
             <div class="prompt">
-
                 {{ masked }}
-
             </div>
 
         </div>
 
 
-        <!-- ========================= -->
+        <!-- ============================== -->
         <!-- RECOMMENDATIONS -->
-        <!-- ========================= -->
+        <!-- ============================== -->
 
         <div class="card">
 

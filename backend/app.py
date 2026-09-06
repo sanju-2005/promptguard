@@ -25,28 +25,22 @@ initialize_database()
 
 def analyze_prompt(prompt):
 
-    # Detect sensitive information
     detected = detect_sensitive_data(prompt)
 
-    # Mask sensitive information
     masked = mask_data(prompt)
 
-    # Detect prompt injection
     injection = detect_prompt_injection(prompt)
 
-    # Get injection categories
     injection_categories = injection.get(
         "categories",
         []
     )
 
-    # Calculate privacy/security/overall risk
     risk = analyze_risk(
         detected,
         injection_categories
     )
 
-    # Generate recommendations
     suggestions = generate_suggestions(
         detected,
         injection["detected"]
@@ -60,7 +54,6 @@ def analyze_prompt(prompt):
         "risk": risk,
         "suggestions": suggestions
     }
-
 
 # --------------------------------------------------
 # HOME PAGE

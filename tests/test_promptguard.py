@@ -448,3 +448,76 @@ def test_history_page(client):
     )
 
     assert response.status_code == 200
+    # ==================================================
+# ADVANCED SENSITIVE DATA TESTS
+# ==================================================
+
+
+def test_aadhaar_detection():
+
+    result = detect_sensitive_data(
+        "My Aadhaar number is 1234 5678 9012"
+    )
+
+    assert any(
+        item["type"] == "aadhaar"
+        for item in result
+    )
+
+
+def test_aadhaar_masking():
+
+    result = mask_data(
+        "My Aadhaar number is 1234 5678 9012"
+    )
+
+    assert "[AADHAAR_MASKED]" in result
+
+
+def test_bank_account_detection():
+
+    result = detect_sensitive_data(
+        "My bank account number is 123456789012"
+    )
+
+    assert any(
+        item["type"] == "bank_account"
+        for item in result
+    )
+
+
+def test_bank_account_masking():
+
+    result = mask_data(
+        "My bank account number is 123456789012"
+    )
+
+    assert "[BANK_ACCOUNT_MASKED]" in result
+
+
+def test_aadhaar_risk():
+
+    detected = detect_sensitive_data(
+        "Aadhaar: 1234 5678 9012"
+    )
+
+    risk = analyze_risk(
+        detected,
+        []
+    )
+
+    assert risk["privacy_score"] >= 40
+
+
+def test_bank_account_risk():
+
+    detected = detect_sensitive_data(
+        "Bank account: 123456789012"
+    )
+
+    risk = analyze_risk(
+        detected,
+        []
+    )
+
+    assert risk["privacy_score"] >= 35
