@@ -1,381 +1,600 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>PromptGuard AI</title>
+    <title>PromptGuard — AI Security Gateway</title>
 
     <link
         rel="stylesheet"
         href="{{ url_for('static', filename='style.css') }}"
     >
-
 </head>
 
 <body>
 
-<div class="container">
+<div class="app-shell">
 
-    <!-- ============================== -->
-    <!-- HEADER -->
-    <!-- ============================== -->
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
 
-    <header>
+        <div class="brand">
+            <div class="brand-mark">P</div>
 
-        <h1>🔐 PromptGuard AI</h1>
+            <div>
+                <div class="brand-name">PROMPTGUARD</div>
+                <div class="brand-subtitle">AI SECURITY GATEWAY</div>
+            </div>
+        </div>
 
-        <p class="subtitle">
-            Privacy & Security Gateway for Generative AI
-        </p>
+        <nav class="navigation">
 
-        <p class="history-link">
-            <a href="/history">
-                📋 View Scan History
+            <div class="nav-label">OVERVIEW</div>
+
+            <a href="/" class="nav-item active">
+                <span class="nav-dot"></span>
+                Analyze
             </a>
-        </p>
 
-    </header>
+            <a href="/history" class="nav-item">
+                <span class="nav-dot"></span>
+                History
+            </a>
 
+        </nav>
 
-    <!-- ============================== -->
-    <!-- PROMPT INPUT -->
-    <!-- ============================== -->
+        <div class="sidebar-footer">
 
-    <form method="POST">
+            <div class="engine-status">
+                <span class="status-indicator"></span>
 
-        <label for="prompt">
-            <strong>Enter your AI prompt</strong>
-        </label>
-
-        <textarea
-            id="prompt"
-            name="prompt"
-            placeholder="Enter a prompt containing text you want to analyze..."
-            required
-        >{{ original }}</textarea>
-
-        <button type="submit">
-            🔍 Analyze Prompt
-        </button>
-
-    </form>
-
-
-    {% if original %}
-
-    <div class="dashboard">
-
-
-        <!-- ============================== -->
-        <!-- SECURITY DASHBOARD -->
-        <!-- ============================== -->
-
-        <div class="card">
-
-            <h2>📊 Security Dashboard</h2>
-
-            <div class="score-grid">
-
-                <div class="score-card">
-
-                    <h3>Privacy Risk</h3>
-
-                    <div class="score">
-                        {{ risk.privacy_score }}
-                    </div>
-
-                    <p>
-                        {{ risk.privacy_level }}
-                    </p>
-
+                <div>
+                    <strong>Protection Active</strong>
+                    <small>Detection Engine v1.0</small>
                 </div>
-
-
-                <div class="score-card">
-
-                    <h3>Security Risk</h3>
-
-                    <div class="score">
-                        {{ risk.security_score }}
-                    </div>
-
-                    <p>
-                        {{ risk.security_level }}
-                    </p>
-
-                </div>
-
-
-                <div class="score-card">
-
-                    <h3>Overall Risk</h3>
-
-                    <div class="score">
-                        {{ risk.overall_score }}
-                    </div>
-
-                    <p>
-                        {{ risk.overall_level }}
-                    </p>
-
-                </div>
-
             </div>
-
-
-            <!-- Risk Meter -->
-
-            <h3>Overall Risk Meter</h3>
-
-            <div class="risk-meter">
-
-                <div
-                    class="risk-fill
-                    {% if risk.overall_level == 'LOW' %}
-                        low
-                    {% elif risk.overall_level == 'MEDIUM' %}
-                        medium
-                    {% else %}
-                        high
-                    {% endif %}"
-                    style="width: {{ risk.overall_score }}%;"
-                ></div>
-
-            </div>
-
-
-            <p class="risk-score">
-
-                <strong>
-                    {{ risk.overall_score }}/100
-                </strong>
-
-                — Overall Risk
-
-            </p>
 
         </div>
 
+    </aside>
 
-        <!-- ============================== -->
-        <!-- SECURITY DECISION -->
-        <!-- ============================== -->
 
-        <div class="card">
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
 
-            <h2>🛡️ Security Decision</h2>
+        <!-- TOP BAR -->
+        <header class="topbar">
 
-            <div
-                class="decision
-                {% if decision.action == 'ALLOW' %}
-                    decision-allow
-                {% elif decision.action == 'SANITIZE' %}
-                    decision-sanitize
-                {% else %}
-                    decision-block
-                {% endif %}"
-            >
+            <div>
+                <div class="breadcrumb">
+                    SECURITY / ANALYSIS
+                </div>
 
-                <div class="decision-action">
+                <h1>Prompt Security Analysis</h1>
 
-                    {% if decision.action == 'ALLOW' %}
+                <p>
+                    Analyze and secure prompts before they reach
+                    downstream AI systems.
+                </p>
+            </div>
 
-                        🟢 ALLOW
+            <div class="system-status">
+                <span class="status-indicator"></span>
+                SYSTEM OPERATIONAL
+            </div>
 
-                    {% elif decision.action == 'SANITIZE' %}
+        </header>
 
-                        🟡 SANITIZE
+
+        <!-- PROMPT INPUT -->
+        <section class="panel prompt-panel">
+
+            <div class="panel-header">
+
+                <div>
+                    <span class="section-label">PROMPT INPUT</span>
+
+                    <h2>Analyze a prompt</h2>
+
+                    <p>
+                        Detect sensitive information and prompt injection
+                        risks before processing.
+                    </p>
+                </div>
+
+            </div>
+
+            <form method="POST">
+
+                <div class="textarea-wrapper">
+
+                    <textarea
+                        id="prompt"
+                        name="prompt"
+                        maxlength="10000"
+                        placeholder="Enter the prompt you want to analyze..."
+                    >{{ original }}</textarea>
+
+                    <div class="textarea-footer">
+
+                        <span>
+                            Security analysis will run automatically.
+                        </span>
+
+                        <span id="char-count">
+                            0 / 10,000
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <button
+                    type="submit"
+                    class="primary-button"
+                >
+                    ANALYZE PROMPT
+                    <span>→</span>
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- RESULTS -->
+        {% if original %}
+
+        <div class="results">
+
+
+            <!-- RISK ASSESSMENT -->
+            <section class="section-block">
+
+                <div class="section-heading">
+                    <div>
+                        <span class="section-label">
+                            RISK ASSESSMENT
+                        </span>
+
+                        <h2>Security posture</h2>
+                    </div>
+
+                    <span class="analysis-complete">
+                        ANALYSIS COMPLETE
+                    </span>
+                </div>
+
+
+                <div class="risk-grid">
+
+                    <!-- PRIVACY -->
+                    <div class="risk-card">
+
+                        <div class="risk-card-top">
+                            <span>PRIVACY RISK</span>
+                            <span class="risk-level {{ risk.privacy_level|lower }}">
+                                {{ risk.privacy_level }}
+                            </span>
+                        </div>
+
+                        <div class="risk-number">
+                            {{ risk.privacy_score }}
+                            <small>/ 100</small>
+                        </div>
+
+                        <div class="progress-track">
+                            <div
+                                class="progress-fill {{ risk.privacy_level|lower }}"
+                                style="width: {{ risk.privacy_score }}%;"
+                            ></div>
+                        </div>
+
+                    </div>
+
+
+                    <!-- SECURITY -->
+                    <div class="risk-card">
+
+                        <div class="risk-card-top">
+                            <span>SECURITY RISK</span>
+                            <span class="risk-level {{ risk.security_level|lower }}">
+                                {{ risk.security_level }}
+                            </span>
+                        </div>
+
+                        <div class="risk-number">
+                            {{ risk.security_score }}
+                            <small>/ 100</small>
+                        </div>
+
+                        <div class="progress-track">
+                            <div
+                                class="progress-fill {{ risk.security_level|lower }}"
+                                style="width: {{ risk.security_score }}%;"
+                            ></div>
+                        </div>
+
+                    </div>
+
+
+                    <!-- OVERALL -->
+                    <div class="risk-card overall-card">
+
+                        <div class="risk-card-top">
+                            <span>OVERALL RISK</span>
+                            <span class="risk-level {{ risk.overall_level|lower }}">
+                                {{ risk.overall_level }}
+                            </span>
+                        </div>
+
+                        <div class="risk-number">
+                            {{ risk.overall_score }}
+                            <small>/ 100</small>
+                        </div>
+
+                        <div class="progress-track">
+                            <div
+                                class="progress-fill {{ risk.overall_level|lower }}"
+                                style="width: {{ risk.overall_score }}%;"
+                            ></div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- SECURITY DECISION -->
+            <section class="panel decision-panel">
+
+                <div class="section-label">
+                    SECURITY DECISION
+                </div>
+
+                <div class="decision-content">
+
+                    <div>
+
+                        <div
+                            class="decision-badge decision-{{ decision.action|lower }}"
+                        >
+                            {{ decision.action }}
+                        </div>
+
+                        <h2>
+                            {{ decision.reason }}
+                        </h2>
+
+                        <p>
+                            PromptGuard has evaluated the submitted prompt
+                            using privacy detection, injection analysis,
+                            and security policy rules.
+                        </p>
+
+                    </div>
+
+                    <div class="decision-score">
+
+                        <span>OVERALL SCORE</span>
+
+                        <strong>
+                            {{ risk.overall_score }}
+                        </strong>
+
+                        <small>/100</small>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ANALYSIS GRID -->
+            <div class="two-column">
+
+
+                <!-- SENSITIVE DATA -->
+                <section class="panel">
+
+                    <div class="panel-header compact">
+
+                        <div>
+                            <span class="section-label">
+                                DETECTION ANALYSIS
+                            </span>
+
+                            <h2>Sensitive data</h2>
+                        </div>
+
+                        <span class="count-badge">
+                            {{ detected|length }}
+                        </span>
+
+                    </div>
+
+
+                    {% if risk.detected_details %}
+
+                    <div class="detection-list">
+
+                        {% for item in risk.detected_details %}
+
+                        <div class="detection-row">
+
+                            <div class="detection-info">
+
+                                <strong>
+                                    {{ item.type|replace("_", " ")|title }}
+                                </strong>
+
+                                <span>
+                                    Detected in prompt
+                                </span>
+
+                            </div>
+
+                            <span
+                                class="severity {{ item.severity|lower }}"
+                            >
+                                {{ item.severity }}
+                            </span>
+
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
 
                     {% else %}
 
-                        🔴 BLOCK
+                    <div class="empty-state">
+                        <strong>No sensitive data detected</strong>
+                        <span>
+                            No supported sensitive-data patterns
+                            were found.
+                        </span>
+                    </div>
 
                     {% endif %}
 
-                </div>
+                </section>
 
 
-                <p>
-                    {{ decision.reason }}
-                </p>
+                <!-- INJECTION -->
+                <section class="panel">
+
+                    <div class="panel-header compact">
+
+                        <div>
+                            <span class="section-label">
+                                THREAT ANALYSIS
+                            </span>
+
+                            <h2>Prompt injection</h2>
+                        </div>
+
+                        {% if injection.detected %}
+                            <span class="threat-status detected">
+                                DETECTED
+                            </span>
+                        {% else %}
+                            <span class="threat-status clear">
+                                CLEAR
+                            </span>
+                        {% endif %}
+
+                    </div>
+
+
+                    {% if injection.detected %}
+
+                    <div class="injection-content">
+
+                        <div class="injection-summary">
+                            Potential malicious instruction patterns
+                            were identified.
+                        </div>
+
+                        {% for category in injection.categories %}
+
+                        <div class="category-row">
+                            <span>{{ category }}</span>
+                            <span class="category-arrow">→</span>
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                    {% else %}
+
+                    <div class="empty-state">
+                        <strong>No injection detected</strong>
+                        <span>
+                            No known prompt injection patterns
+                            were identified.
+                        </span>
+                    </div>
+
+                    {% endif %}
+
+                </section>
 
             </div>
 
-        </div>
+
+            <!-- PROMPTS -->
+            <div class="two-column">
 
 
-        <!-- ============================== -->
-        <!-- PROMPT INJECTION ANALYSIS -->
-        <!-- ============================== -->
+                <!-- ORIGINAL -->
+                <section class="panel">
 
-        <div class="card">
+                    <div class="panel-header compact">
 
-            <h2>🚨 Prompt Injection Analysis</h2>
+                        <div>
+                            <span class="section-label">
+                                INPUT
+                            </span>
+
+                            <h2>Original prompt</h2>
+                        </div>
+
+                    </div>
+
+                    <div class="code-box">
+                        {{ original }}
+                    </div>
+
+                </section>
 
 
-            {% if injection.detected %}
+                <!-- MASKED -->
+                <section class="panel sanitized-panel">
 
-                <div class="alert danger">
+                    <div class="panel-header compact">
 
-                    ⚠ Potential prompt injection detected.
+                        <div>
+                            <span class="section-label">
+                                SECURE OUTPUT
+                            </span>
+
+                            <h2>Sanitized prompt</h2>
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="code-box"
+                        id="sanitized-prompt"
+                    >
+                        {{ masked }}
+                    </div>
+
+                    <button
+                        type="button"
+                        class="copy-button"
+                        onclick="copySanitizedPrompt()"
+                    >
+                        COPY SANITIZED PROMPT
+                    </button>
+
+                </section>
+
+            </div>
+
+
+            <!-- RECOMMENDATIONS -->
+            <section class="panel">
+
+                <div class="panel-header">
+
+                    <div>
+                        <span class="section-label">
+                            SECURITY GUIDANCE
+                        </span>
+
+                        <h2>Recommendations</h2>
+                    </div>
 
                 </div>
 
 
-                <h3>Attack Categories</h3>
+                <div class="recommendation-list">
 
+                    {% for suggestion in suggestions %}
 
-                <ul>
+                    <div class="recommendation">
 
-                    {% for item in risk.injection_details %}
+                        <span class="recommendation-number">
+                            {{ "%02d"|format(loop.index) }}
+                        </span>
 
-                        <li>
+                        <span>
+                            {{ suggestion }}
+                        </span>
 
-                            <strong>
-                                {{ item.category }}
-                            </strong>
-
-                            —
-
-                            <span
-                                class="severity {{ item.severity|lower }}"
-                            >
-                                {{ item.severity }}
-                            </span>
-
-                        </li>
+                    </div>
 
                     {% endfor %}
 
-                </ul>
-
-
-            {% else %}
-
-                <div class="alert safe">
-
-                    ✅ No obvious prompt injection detected.
-
                 </div>
 
-            {% endif %}
+            </section>
+
 
         </div>
 
+        {% endif %}
 
-        <!-- ============================== -->
-        <!-- SENSITIVE DATA -->
-        <!-- ============================== -->
-
-        <div class="card">
-
-            <h2>🔎 Detected Sensitive Data</h2>
-
-
-            {% if risk.detected_details %}
-
-                <ul>
-
-                    {% for item in risk.detected_details %}
-
-                        <li>
-
-                            🔴
-
-                            <strong>
-                                {{ item.type }}
-                            </strong>
-
-                            —
-
-                            <code>
-                                {{ item.value }}
-                            </code>
-
-                            —
-
-                            <span
-                                class="severity {{ item.severity|lower }}"
-                            >
-                                {{ item.severity }}
-                            </span>
-
-                        </li>
-
-                    {% endfor %}
-
-                </ul>
-
-
-            {% else %}
-
-                <p>
-                    ✅ No sensitive information detected.
-                </p>
-
-            {% endif %}
-
-        </div>
-
-
-        <!-- ============================== -->
-        <!-- ORIGINAL PROMPT -->
-        <!-- ============================== -->
-
-        <div class="card">
-
-            <h2>📝 Original Prompt</h2>
-
-            <div class="prompt">
-                {{ original }}
-            </div>
-
-        </div>
-
-
-        <!-- ============================== -->
-        <!-- SAFE PROMPT -->
-        <!-- ============================== -->
-
-        <div class="card safe-card">
-
-            <h2>🛡️ Safe Prompt</h2>
-
-            <div class="prompt">
-                {{ masked }}
-            </div>
-
-        </div>
-
-
-        <!-- ============================== -->
-        <!-- SECURITY RECOMMENDATIONS -->
-        <!-- ============================== -->
-
-        <div class="card">
-
-            <h2>💡 Security Recommendations</h2>
-
-            <ul>
-
-                {% for suggestion in suggestions %}
-
-                    <li>
-                        {{ suggestion }}
-                    </li>
-
-                {% endfor %}
-
-            </ul>
-
-        </div>
-
-
-    </div>
-
-    {% endif %}
+    </main>
 
 </div>
+
+
+<script>
+
+    const textarea = document.getElementById("prompt");
+    const counter = document.getElementById("char-count");
+
+    function updateCounter() {
+
+        if (!textarea || !counter) {
+            return;
+        }
+
+        counter.textContent =
+            textarea.value.length + " / 10,000";
+    }
+
+    if (textarea) {
+
+        textarea.addEventListener(
+            "input",
+            updateCounter
+        );
+
+        updateCounter();
+    }
+
+
+    function copySanitizedPrompt() {
+
+        const element =
+            document.getElementById("sanitized-prompt");
+
+        if (!element) {
+            return;
+        }
+
+        navigator.clipboard.writeText(
+            element.innerText
+        );
+
+        const button =
+            document.querySelector(".copy-button");
+
+        const originalText =
+            button.textContent;
+
+        button.textContent =
+            "COPIED";
+
+        setTimeout(function () {
+
+            button.textContent =
+                originalText;
+
+        }, 1500);
+    }
+
+</script>
 
 </body>
 

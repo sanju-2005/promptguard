@@ -1,9 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 
-    <title>PromptGuard - Scan History</title>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>PromptGuard — Scan History</title>
 
     <link
         rel="stylesheet"
@@ -12,87 +19,310 @@
 
 </head>
 
+
 <body>
 
-<div class="container">
+<div class="app-shell">
 
-    <h1>🔐 PromptGuard AI</h1>
 
-    <p class="subtitle">
-        Security Scan History
-    </p>
+    <!-- SIDEBAR -->
 
-    <p>
-        <a href="/">← Back to Analyzer</a>
-    </p>
+    <aside class="sidebar">
 
-    <div class="card">
+        <div class="brand">
 
-        <h2>Previous Scans</h2>
+            <div class="brand-mark">
+                P
+            </div>
 
-        {% if scans %}
+            <div>
 
-            {% for scan in scans %}
+                <div class="brand-name">
+                    PROMPTGUARD
+                </div>
 
-                <div class="history-item">
+                <div class="brand-subtitle">
+                    AI SECURITY GATEWAY
+                </div>
 
-                    <p>
-                        <strong>
-                            Scan #{{ scan.id }}
-                        </strong>
-                    </p>
+            </div>
 
-                    <p>
-                        Risk:
-                        <strong>
-                            {{ scan.overall_score }}/100
-                        </strong>
-                        — {{ scan.overall_level }}
-                    </p>
+        </div>
 
-                    <p>
-                        Privacy:
-                        {{ scan.privacy_score }}/100
-                    </p>
 
-                    <p>
-                        Security:
-                        {{ scan.security_score }}/100
-                    </p>
+        <nav class="navigation">
 
-                    <p>
-                        Injection:
+            <div class="nav-label">
+                OVERVIEW
+            </div>
 
-                        {% if scan.injection_detected %}
+            <a
+                href="/"
+                class="nav-item"
+            >
+                <span class="nav-dot"></span>
+                Analyze
+            </a>
 
-                            ⚠ Detected
+            <a
+                href="/history"
+                class="nav-item active"
+            >
+                <span class="nav-dot"></span>
+                History
+            </a>
 
-                        {% else %}
+        </nav>
 
-                            ✅ Not detected
 
-                        {% endif %}
+        <div class="sidebar-footer">
 
-                    </p>
+            <div class="engine-status">
 
-                    <p>
-                        Time:
-                        {{ scan.created_at }}
-                    </p>
+                <span class="status-indicator"></span>
 
-                    <hr>
+                <div>
+
+                    <strong>
+                        Protection Active
+                    </strong>
+
+                    <small>
+                        Detection Engine v1.0
+                    </small>
 
                 </div>
 
-            {% endfor %}
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+
+    <main class="main-content">
+
+
+        <header class="topbar">
+
+            <div>
+
+                <div class="breadcrumb">
+                    SECURITY / HISTORY
+                </div>
+
+                <h1>
+                    Scan History
+                </h1>
+
+                <p>
+                    Review previously analyzed prompts and
+                    their security assessments.
+                </p>
+
+            </div>
+
+
+            <div class="system-status">
+
+                <span class="status-indicator"></span>
+
+                SYSTEM OPERATIONAL
+
+            </div>
+
+        </header>
+
+
+        {% if scans %}
+
+        <section class="panel history-panel">
+
+            <div class="history-header">
+
+                <div>
+
+                    <span class="section-label">
+                        SECURITY LOG
+                    </span>
+
+                    <h2>
+                        Previous scans
+                    </h2>
+
+                </div>
+
+                <div class="scan-count">
+                    {{ scans|length }} SCANS
+                </div>
+
+            </div>
+
+
+            <div class="history-table-wrapper">
+
+                <table class="history-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>ID</th>
+
+                            <th>TIME</th>
+
+                            <th>PRIVACY</th>
+
+                            <th>SECURITY</th>
+
+                            <th>OVERALL</th>
+
+                            <th>INJECTION</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for scan in scans %}
+
+                        <tr>
+
+                            <td class="scan-id">
+                                #{{ scan["id"] }}
+                            </td>
+
+                            <td>
+                                {{ scan["created_at"] }}
+                            </td>
+
+                            <td>
+                                {{ scan["privacy_score"] }}/100
+                            </td>
+
+                            <td>
+                                {{ scan["security_score"] }}/100
+                            </td>
+
+                            <td>
+
+                                <strong>
+                                    {{ scan["overall_score"] }}/100
+                                </strong>
+
+                                <span
+                                    class="table-risk {{ scan['overall_level']|lower }}"
+                                >
+                                    {{ scan["overall_level"] }}
+                                </span>
+
+                            </td>
+
+                            <td>
+
+                                {% if scan["injection_detected"] %}
+
+                                    <span class="threat-status detected">
+                                        DETECTED
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="threat-status clear">
+                                        CLEAR
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+
+                        <tr class="prompt-detail-row">
+
+                            <td colspan="6">
+
+                                <div class="history-prompts">
+
+                                    <div>
+
+                                        <span>
+                                            ORIGINAL
+                                        </span>
+
+                                        <p>
+                                            {{ scan["original_prompt"] }}
+                                        </p>
+
+                                    </div>
+
+
+                                    <div>
+
+                                        <span>
+                                            SANITIZED
+                                        </span>
+
+                                        <p>
+                                            {{ scan["masked_prompt"] }}
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
 
         {% else %}
 
-            <p>No scans recorded yet.</p>
+
+        <section class="panel empty-history">
+
+            <span class="section-label">
+                SECURITY LOG
+            </span>
+
+            <h2>
+                No scans yet
+            </h2>
+
+            <p>
+                Analyze your first prompt to create a
+                security scan.
+            </p>
+
+            <a
+                href="/"
+                class="primary-button link-button"
+            >
+                ANALYZE PROMPT →
+            </a>
+
+        </section>
+
 
         {% endif %}
 
-    </div>
+
+    </main>
 
 </div>
 
