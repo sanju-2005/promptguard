@@ -19,13 +19,9 @@
 
 </head>
 
-
 <body>
 
 <div class="app-shell">
-
-
-    <!-- SIDEBAR -->
 
     <aside class="sidebar">
 
@@ -48,7 +44,6 @@
             </div>
 
         </div>
-
 
         <nav class="navigation">
 
@@ -73,7 +68,6 @@
             </a>
 
         </nav>
-
 
         <div class="sidebar-footer">
 
@@ -100,10 +94,7 @@
     </aside>
 
 
-    <!-- MAIN -->
-
     <main class="main-content">
-
 
         <header class="topbar">
 
@@ -118,12 +109,11 @@
                 </h1>
 
                 <p>
-                    Review previously analyzed prompts and
-                    their security assessments.
+                    Review previous security scans.
+                    Original sensitive values are never stored.
                 </p>
 
             </div>
-
 
             <div class="system-status">
 
@@ -252,20 +242,7 @@
                                     <div>
 
                                         <span>
-                                            ORIGINAL
-                                        </span>
-
-                                        <p>
-                                            {{ scan["original_prompt"] }}
-                                        </p>
-
-                                    </div>
-
-
-                                    <div>
-
-                                        <span>
-                                            SANITIZED
+                                            SANITIZED PROMPT
                                         </span>
 
                                         <p>
@@ -293,7 +270,6 @@
 
         {% else %}
 
-
         <section class="panel empty-history">
 
             <span class="section-label">
@@ -318,9 +294,7 @@
 
         </section>
 
-
         {% endif %}
-
 
     </main>
 
