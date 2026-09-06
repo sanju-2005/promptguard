@@ -14,6 +14,10 @@ from backend.database import (
 )
 
 
+# ==========================================
+# FLASK APPLICATION
+# ==========================================
+
 app = Flask(
     __name__,
     template_folder="../frontend/templates",
@@ -21,9 +25,23 @@ app = Flask(
 )
 
 
-# Initialize database when application starts
+# ==========================================
+# DATABASE INITIALIZATION
+# ==========================================
+
 initialize_database()
 
+
+# ==========================================
+# CONFIGURATION
+# ==========================================
+
+MAX_PROMPT_LENGTH = 10000
+
+
+# ==========================================
+# PROMPT ANALYSIS PIPELINE
+# ==========================================
 
 def analyze_prompt(prompt):
 
@@ -105,19 +123,18 @@ def index():
             "injection_details": []
         },
 
-        # IMPORTANT:
-        # This prevents Jinja from saying
-        # "decision is undefined"
         "decision": {
             "action": "ALLOW",
-            "reason": "Enter a prompt to perform a security analysis."
+            "reason": (
+                "Enter a prompt to perform a security analysis."
+            )
         },
 
         "suggestions": []
     }
 
 
-    # If user submitted a prompt
+    # Process submitted prompt
     if request.method == "POST":
 
         prompt = request.form.get(
@@ -126,20 +143,49 @@ def index():
         ).strip()
 
 
-        if prompt:
+        # Empty prompt
+        if not prompt:
 
-            result = analyze_prompt(
-                prompt
+            return render_template(
+                "index.html",
+                **result
             )
 
 
-            # Save scan to database
-            save_scan(
-                result["original"],
-                result["masked"],
-                result["risk"],
-                result["injection"]["detected"]
+        # Prompt length validation
+        if len(prompt) > MAX_PROMPT_LENGTH:
+
+            result["decision"] = {
+                "action": "BLOCK",
+                "reason": (
+                    f"Prompt is too long. "
+                    f"Maximum length is {MAX_PROMPT_LENGTH} characters."
+                )
+            }
+
+            result["suggestions"] = [
+                "Reduce the prompt length and try again."
+            ]
+
+            return render_template(
+                "index.html",
+                **result
             )
+
+
+        # Analyze prompt
+        result = analyze_prompt(
+            prompt
+        )
+
+
+        # Save scan
+        save_scan(
+            result["original"],
+            result["masked"],
+            result["risk"],
+            result["injection"]["detected"]
+        )
 
 
     return render_template(
@@ -155,6 +201,7 @@ def index():
 @app.route("/api/analyze", methods=["POST"])
 def api_analyze():
 
+    # Read JSON request
     data = request.get_json(
         silent=True
     )
@@ -164,7 +211,9 @@ def api_analyze():
     if not data or "prompt" not in data:
 
         return jsonify({
-            "error": "Request must contain a 'prompt' field."
+            "error": (
+                "Request must contain a 'prompt' field."
+            )
         }), 400
 
 
@@ -190,6 +239,17 @@ def api_analyze():
         }), 400
 
 
+    # Maximum prompt length
+    if len(prompt) > MAX_PROMPT_LENGTH:
+
+        return jsonify({
+            "error": (
+                f"Prompt is too long. "
+                f"Maximum length is {MAX_PROMPT_LENGTH} characters."
+            )
+        }), 413
+
+
     # Analyze prompt
     result = analyze_prompt(
         prompt
@@ -208,6 +268,8 @@ def api_analyze():
     return jsonify(
         result
     )
+
+
 # ==========================================
 # HEALTH CHECK
 # ==========================================
@@ -220,11 +282,10 @@ def health():
         "service": "PromptGuard AI"
     })
 
+
 # ==========================================
 # SCAN HISTORY
 # ==========================================
-
-
 
 @app.route("/history")
 def history():

@@ -750,3 +750,39 @@ def test_health_endpoint(client):
 
     assert data["status"] == "healthy"
     assert data["service"] == "PromptGuard AI"
+    # ==================================================
+# INPUT VALIDATION TESTS
+# ==================================================
+
+def test_api_rejects_oversized_prompt(client):
+
+    oversized_prompt = "A" * 10001
+
+    response = client.post(
+        "/api/analyze",
+        json={
+            "prompt": oversized_prompt
+        }
+    )
+
+    assert response.status_code == 413
+
+    data = response.get_json()
+
+    assert "error" in data
+
+    assert "too long" in data["error"].lower()
+
+
+def test_api_accepts_maximum_allowed_prompt(client):
+
+    prompt = "A" * 10000
+
+    response = client.post(
+        "/api/analyze",
+        json={
+            "prompt": prompt
+        }
+    )
+
+    assert response.status_code == 200
