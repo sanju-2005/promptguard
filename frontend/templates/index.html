@@ -1,537 +1,351 @@
+````html
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>PromptGuard — AI Security Gateway</title>
+    <title>PromptGuard AI</title>
 
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='style.css') }}"
-    >
+    <style>
+        .ai-response-content {
+            line-height: 1.7;
+            white-space: normal;
+        }
+
+        .ai-response-content h1,
+        .ai-response-content h2,
+        .ai-response-content h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .ai-response-content p {
+            margin: 10px 0;
+        }
+
+        .ai-response-content ul,
+        .ai-response-content ol {
+            margin: 10px 0 10px 25px;
+        }
+
+        .ai-response-content li {
+            margin: 5px 0;
+        }
+
+        .ai-response-content code {
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        .ai-response-content pre {
+            padding: 12px;
+            overflow-x: auto;
+            border-radius: 8px;
+        }
+
+        .ai-response-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .ai-response-content th,
+        .ai-response-content td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="app-shell">
+<div class="container">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
+    <header>
+        <h1>🛡️ PromptGuard</h1>
+        <p>AI Security Gateway</p>
 
-        <div class="brand">
-            <div class="brand-mark">P</div>
-
-            <div>
-                <div class="brand-name">PROMPTGUARD</div>
-                <div class="brand-subtitle">AI SECURITY GATEWAY</div>
-            </div>
-        </div>
-
-        <nav class="navigation">
-
-            <div class="nav-label">OVERVIEW</div>
-
-            <a href="/" class="nav-item active">
-                <span class="nav-dot"></span>
-                Analyze
-            </a>
-
-            <a href="/history" class="nav-item">
-                <span class="nav-dot"></span>
-                History
-            </a>
-
+        <nav>
+            <a href="/">🔍 Analyze</a>
+            <a href="/history">📜 History</a>
         </nav>
 
-        <div class="sidebar-footer">
-
-            <div class="engine-status">
-                <span class="status-indicator"></span>
-
-                <div>
-                    <strong>Protection Active</strong>
-                    <small>Detection Engine v1.0</small>
-                </div>
-            </div>
-
+        <div>
+            <strong>System Protected</strong>
+            <br>
+            PromptGuard Active
         </div>
+    </header>
 
-    </aside>
+
+    <main>
+
+        <!-- ==========================================
+             INTRODUCTION
+        =========================================== -->
+
+        <section>
+            <h2>Prompt Security & AI Generation</h2>
+
+            <p>
+                Protect your data, optimize your prompts,
+                and securely interact with AI.
+            </p>
+        </section>
 
 
-    <!-- MAIN CONTENT -->
-    <main class="main-content">
+        <!-- ==========================================
+             PROMPT INPUT
+        =========================================== -->
 
-        <!-- TOP BAR -->
-        <header class="topbar">
+        <section>
+
+            <h2>Enter Your Prompt</h2>
+
+            <p>
+                PromptGuard will analyze and secure your prompt
+                before sending it to an AI model.
+            </p>
+
+            <textarea
+                id="promptInput"
+                maxlength="10000"
+                rows="8"
+                placeholder="Enter your prompt here..."
+            ></textarea>
 
             <div>
-                <div class="breadcrumb">
-                    SECURITY / ANALYSIS
-                </div>
-
-                <h1>Prompt Security Analysis</h1>
-
-                <p>
-                    Analyze and secure prompts before they reach
-                    downstream AI systems.
-                </p>
+                <span id="charCount">0</span> / 10000
             </div>
 
-            <div class="system-status">
-                <span class="status-indicator"></span>
-                SYSTEM OPERATIONAL
-            </div>
 
-        </header>
+            <br>
+
+            <label for="provider">
+                <strong>AI Provider</strong>
+            </label>
+
+            <select id="provider">
+                <option value="groq">Groq</option>
+                <option value="ollama">Ollama</option>
+            </select>
 
 
-        <!-- PROMPT INPUT -->
-        <section class="panel prompt-panel">
+            <br><br>
 
-            <div class="panel-header">
+            <button
+                id="generateBtn"
+                onclick="generateResponse()"
+            >
+                🚀 Generate AI Response
+            </button>
 
-                <div>
-                    <span class="section-label">PROMPT INPUT</span>
+            <p id="loading" style="display:none;">
+                ⏳ PromptGuard is analyzing and generating...
+            </p>
 
-                    <h2>Analyze a prompt</h2>
-
-                    <p>
-                        Detect sensitive information and prompt injection
-                        risks before processing.
-                    </p>
-                </div>
-
-            </div>
-
-            <form method="POST">
-
-                <div class="textarea-wrapper">
-
-                    <textarea
-                        id="prompt"
-                        name="prompt"
-                        maxlength="10000"
-                        placeholder="Enter the prompt you want to analyze..."
-                    >{{ original }}</textarea>
-
-                    <div class="textarea-footer">
-
-                        <span>
-                            Security analysis will run automatically.
-                        </span>
-
-                        <span id="char-count">
-                            0 / 10,000
-                        </span>
-
-                    </div>
-
-                </div>
-
-                <button
-                    type="submit"
-                    class="primary-button"
-                >
-                    ANALYZE PROMPT
-                    <span>→</span>
-                </button>
-
-            </form>
+            <p
+                id="errorMessage"
+                style="display:none;"
+            ></p>
 
         </section>
 
 
-        <!-- RESULTS -->
-        {% if original %}
+        <!-- ==========================================
+             SECURITY ANALYSIS
+        =========================================== -->
 
-        <div class="results">
+        <section
+            id="securitySection"
+            style="display:none;"
+        >
 
+            <h2>🛡️ Security Analysis</h2>
 
-            <!-- RISK ASSESSMENT -->
-            <section class="section-block">
+            <p>
+                PromptGuard security checks performed before AI generation.
+            </p>
 
-                <div class="section-heading">
-                    <div>
-                        <span class="section-label">
-                            RISK ASSESSMENT
-                        </span>
 
-                        <h2>Security posture</h2>
-                    </div>
-
-                    <span class="analysis-complete">
-                        ANALYSIS COMPLETE
-                    </span>
-                </div>
-
-
-                <div class="risk-grid">
-
-                    <!-- PRIVACY -->
-                    <div class="risk-card">
-
-                        <div class="risk-card-top">
-                            <span>PRIVACY RISK</span>
-                            <span class="risk-level {{ risk.privacy_level|lower }}">
-                                {{ risk.privacy_level }}
-                            </span>
-                        </div>
-
-                        <div class="risk-number">
-                            {{ risk.privacy_score }}
-                            <small>/ 100</small>
-                        </div>
-
-                        <div class="progress-track">
-                            <div
-                                class="progress-fill {{ risk.privacy_level|lower }}"
-                                style="width: {{ risk.privacy_score }}%;"
-                            ></div>
-                        </div>
-
-                    </div>
-
-
-                    <!-- SECURITY -->
-                    <div class="risk-card">
-
-                        <div class="risk-card-top">
-                            <span>SECURITY RISK</span>
-                            <span class="risk-level {{ risk.security_level|lower }}">
-                                {{ risk.security_level }}
-                            </span>
-                        </div>
-
-                        <div class="risk-number">
-                            {{ risk.security_score }}
-                            <small>/ 100</small>
-                        </div>
-
-                        <div class="progress-track">
-                            <div
-                                class="progress-fill {{ risk.security_level|lower }}"
-                                style="width: {{ risk.security_score }}%;"
-                            ></div>
-                        </div>
-
-                    </div>
-
-
-                    <!-- OVERALL -->
-                    <div class="risk-card overall-card">
-
-                        <div class="risk-card-top">
-                            <span>OVERALL RISK</span>
-                            <span class="risk-level {{ risk.overall_level|lower }}">
-                                {{ risk.overall_level }}
-                            </span>
-                        </div>
-
-                        <div class="risk-number">
-                            {{ risk.overall_score }}
-                            <small>/ 100</small>
-                        </div>
-
-                        <div class="progress-track">
-                            <div
-                                class="progress-fill {{ risk.overall_level|lower }}"
-                                style="width: {{ risk.overall_score }}%;"
-                            ></div>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- SECURITY DECISION -->
-            <section class="panel decision-panel">
-
-                <div class="section-label">
-                    SECURITY DECISION
-                </div>
-
-                <div class="decision-content">
-
-                    <div>
-
-                        <div
-                            class="decision-badge decision-{{ decision.action|lower }}"
-                        >
-                            {{ decision.action }}
-                        </div>
-
-                        <h2>
-                            {{ decision.reason }}
-                        </h2>
-
-                        <p>
-                            PromptGuard has evaluated the submitted prompt
-                            using privacy detection, injection analysis,
-                            and security policy rules.
-                        </p>
-
-                    </div>
-
-                    <div class="decision-score">
-
-                        <span>OVERALL SCORE</span>
-
-                        <strong>
-                            {{ risk.overall_score }}
-                        </strong>
-
-                        <small>/100</small>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- ANALYSIS GRID -->
-            <div class="two-column">
-
-
-                <!-- SENSITIVE DATA -->
-                <section class="panel">
-
-                    <div class="panel-header compact">
-
-                        <div>
-                            <span class="section-label">
-                                DETECTION ANALYSIS
-                            </span>
-
-                            <h2>Sensitive data</h2>
-                        </div>
-
-                        <span class="count-badge">
-                            {{ detected|length }}
-                        </span>
-
-                    </div>
-
-
-                    {% if risk.detected_details %}
-
-                    <div class="detection-list">
-
-                        {% for item in risk.detected_details %}
-
-                        <div class="detection-row">
-
-                            <div class="detection-info">
-
-                                <strong>
-                                    {{ item.type|replace("_", " ")|title }}
-                                </strong>
-
-                                <span>
-                                    Detected in prompt
-                                </span>
-
-                            </div>
-
-                            <span
-                                class="severity {{ item.severity|lower }}"
-                            >
-                                {{ item.severity }}
-                            </span>
-
-                        </div>
-
-                        {% endfor %}
-
-                    </div>
-
-                    {% else %}
-
-                    <div class="empty-state">
-                        <strong>No sensitive data detected</strong>
-                        <span>
-                            No supported sensitive-data patterns
-                            were found.
-                        </span>
-                    </div>
-
-                    {% endif %}
-
-                </section>
-
-
-                <!-- INJECTION -->
-                <section class="panel">
-
-                    <div class="panel-header compact">
-
-                        <div>
-                            <span class="section-label">
-                                THREAT ANALYSIS
-                            </span>
-
-                            <h2>Prompt injection</h2>
-                        </div>
-
-                        {% if injection.detected %}
-                            <span class="threat-status detected">
-                                DETECTED
-                            </span>
-                        {% else %}
-                            <span class="threat-status clear">
-                                CLEAR
-                            </span>
-                        {% endif %}
-
-                    </div>
-
-
-                    {% if injection.detected %}
-
-                    <div class="injection-content">
-
-                        <div class="injection-summary">
-                            Potential malicious instruction patterns
-                            were identified.
-                        </div>
-
-                        {% for category in injection.categories %}
-
-                        <div class="category-row">
-                            <span>{{ category }}</span>
-                            <span class="category-arrow">→</span>
-                        </div>
-
-                        {% endfor %}
-
-                    </div>
-
-                    {% else %}
-
-                    <div class="empty-state">
-                        <strong>No injection detected</strong>
-                        <span>
-                            No known prompt injection patterns
-                            were identified.
-                        </span>
-                    </div>
-
-                    {% endif %}
-
-                </section>
-
+            <div>
+                <strong>Privacy Risk</strong>
+                <p id="privacyRisk">-</p>
             </div>
 
 
-            <!-- PROMPTS -->
-            <div class="two-column">
-
-
-                <!-- ORIGINAL -->
-                <section class="panel">
-
-                    <div class="panel-header compact">
-
-                        <div>
-                            <span class="section-label">
-                                INPUT
-                            </span>
-
-                            <h2>Original prompt</h2>
-                        </div>
-
-                    </div>
-
-                    <div class="code-box">
-                        {{ original }}
-                    </div>
-
-                </section>
-
-
-                <!-- MASKED -->
-                <section class="panel sanitized-panel">
-
-                    <div class="panel-header compact">
-
-                        <div>
-                            <span class="section-label">
-                                SECURE OUTPUT
-                            </span>
-
-                            <h2>Sanitized prompt</h2>
-                        </div>
-
-                    </div>
-
-                    <div
-                        class="code-box"
-                        id="sanitized-prompt"
-                    >
-                        {{ masked }}
-                    </div>
-
-                    <button
-                        type="button"
-                        class="copy-button"
-                        onclick="copySanitizedPrompt()"
-                    >
-                        COPY SANITIZED PROMPT
-                    </button>
-
-                </section>
-
+            <div>
+                <strong>Security Risk</strong>
+                <p id="securityRisk">-</p>
             </div>
 
 
-            <!-- RECOMMENDATIONS -->
-            <section class="panel">
-
-                <div class="panel-header">
-
-                    <div>
-                        <span class="section-label">
-                            SECURITY GUIDANCE
-                        </span>
-
-                        <h2>Recommendations</h2>
-                    </div>
-
-                </div>
+            <div>
+                <strong>Overall Risk</strong>
+                <p id="overallRisk">-</p>
+            </div>
 
 
-                <div class="recommendation-list">
-
-                    {% for suggestion in suggestions %}
-
-                    <div class="recommendation">
-
-                        <span class="recommendation-number">
-                            {{ "%02d"|format(loop.index) }}
-                        </span>
-
-                        <span>
-                            {{ suggestion }}
-                        </span>
-
-                    </div>
-
-                    {% endfor %}
-
-                </div>
-
-            </section>
+            <div>
+                <strong>Security Decision</strong>
+                <p id="securityDecision">-</p>
+            </div>
 
 
-        </div>
+            <h3>🔐 Sensitive Data</h3>
 
-        {% endif %}
+            <div id="sensitiveData">
+                -
+            </div>
+
+
+            <h3>🚨 Prompt Injection</h3>
+
+            <div id="injectionData">
+                -
+            </div>
+
+        </section>
+
+
+        <!-- ==========================================
+             PROMPT TRANSFORMATION
+        =========================================== -->
+
+        <section
+            id="transformationSection"
+            style="display:none;"
+        >
+
+            <h2>✨ Prompt Transformation</h2>
+
+            <p>
+                Your prompt after security processing and optimization.
+            </p>
+
+
+            <h3>🔒 Sanitized Prompt</h3>
+
+            <pre id="sanitizedPrompt"></pre>
+
+
+            <h3>✨ Optimized Prompt</h3>
+
+            <pre id="optimizedPrompt"></pre>
+
+        </section>
+
+
+        <!-- ==========================================
+             TOKEN ANALYSIS
+        =========================================== -->
+
+        <section
+            id="tokenSection"
+            style="display:none;"
+        >
+
+            <h2>📊 Token & Context Analysis</h2>
+
+            <p>
+                Estimated usage before sending the prompt
+                to the selected model.
+            </p>
+
+
+            <p>
+                <strong>Input Tokens</strong>
+                <span id="inputTokens">-</span>
+            </p>
+
+
+            <p>
+                <strong>Estimated Output</strong>
+                <span id="estimatedOutput">-</span>
+            </p>
+
+
+            <p>
+                <strong>Total Estimated</strong>
+                <span id="totalEstimated">-</span>
+            </p>
+
+
+            <p>
+                <strong>Context Usage</strong>
+                <span id="contextUsage">-</span>
+            </p>
+
+
+            <p>
+                <strong>Status</strong>
+                <span id="tokenStatus">-</span>
+            </p>
+
+
+            <p id="tokenWarning"></p>
+
+        </section>
+
+
+        <!-- ==========================================
+             AI RESPONSE
+        =========================================== -->
+
+        <section
+            id="responseSection"
+            style="display:none;"
+        >
+
+            <h2>🤖 AI Response</h2>
+
+
+            <p>
+                Generated by
+                <strong id="responseProvider">-</strong>
+                /
+                <strong id="responseModel">-</strong>
+            </p>
+
+
+            <h3>
+                AI Generated Answer
+
+                <button onclick="copyResponse()">
+                    📋 Copy
+                </button>
+            </h3>
+
+
+            <div
+                id="aiResponse"
+                class="ai-response-content"
+            ></div>
+
+
+            <h3>📈 Actual Model Usage</h3>
+
+
+            <p>
+                <strong>Prompt Tokens</strong>
+                <span id="actualPromptTokens">-</span>
+            </p>
+
+
+            <p>
+                <strong>Completion Tokens</strong>
+                <span id="actualCompletionTokens">-</span>
+            </p>
+
+
+            <p>
+                <strong>Total Tokens</strong>
+                <span id="actualTotalTokens">-</span>
+            </p>
+
+        </section>
 
     </main>
 
@@ -540,62 +354,677 @@
 
 <script>
 
-    const textarea = document.getElementById("prompt");
-    const counter = document.getElementById("char-count");
+/* ==========================================
+   PROMPT INPUT
+========================================== */
 
-    function updateCounter() {
+const promptInput =
+    document.getElementById("promptInput");
 
-        if (!textarea || !counter) {
-            return;
-        }
+const charCount =
+    document.getElementById("charCount");
 
-        counter.textContent =
-            textarea.value.length + " / 10,000";
+
+promptInput.addEventListener(
+    "input",
+    function () {
+
+        charCount.textContent =
+            promptInput.value.length;
+
+    }
+);
+
+
+/* ==========================================
+   MARKDOWN RENDERER
+========================================== */
+
+function renderMarkdown(text) {
+
+    if (!text) {
+        return "";
     }
 
-    if (textarea) {
 
-        textarea.addEventListener(
-            "input",
-            updateCounter
+    /*
+     * Remove unnecessary escaping
+     */
+    text = text
+        .replace(/\\\*\*/g, "**")
+        .replace(/\\\*/g, "*")
+        .replace(/\\#/g, "#")
+        .replace(/\\`/g, "`")
+        .replace(/\\-/g, "-");
+
+
+    /*
+     * Escape HTML
+     */
+    text = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+
+    /*
+     * Code blocks
+     */
+    text = text.replace(
+        /```([\s\S]*?)```/g,
+        "<pre><code>$1</code></pre>"
+    );
+
+
+    /*
+     * Headings
+     */
+    text = text.replace(
+        /^### (.*)$/gm,
+        "<h3>$1</h3>"
+    );
+
+
+    text = text.replace(
+        /^## (.*)$/gm,
+        "<h2>$1</h2>"
+    );
+
+
+    text = text.replace(
+        /^# (.*)$/gm,
+        "<h1>$1</h1>"
+    );
+
+
+    /*
+     * Bold
+     */
+    text = text.replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong>$1</strong>"
+    );
+
+
+    /*
+     * Italic
+     */
+    text = text.replace(
+        /\*(.*?)\*/g,
+        "<em>$1</em>"
+    );
+
+
+    /*
+     * Inline code
+     */
+    text = text.replace(
+        /`([^`]+)`/g,
+        "<code>$1</code>"
+    );
+
+
+    /*
+     * Bullet points
+     */
+    text = text.replace(
+        /^[-•] (.*)$/gm,
+        "<li>$1</li>"
+    );
+
+
+    /*
+     * Numbered points
+     */
+    text = text.replace(
+        /^\d+\.\s+(.*)$/gm,
+        "<li>$1</li>"
+    );
+
+
+    /*
+     * Convert consecutive list items
+     * into an unordered list.
+     */
+    text = text.replace(
+        /(<li>.*<\/li>)/gs,
+        "<ul>$1</ul>"
+    );
+
+
+    /*
+     * Horizontal rule
+     */
+    text = text.replace(
+        /^---$/gm,
+        "<hr>"
+    );
+
+
+    /*
+     * Paragraph spacing
+     */
+    text = text.replace(
+        /\n{2,}/g,
+        "</p><p>"
+    );
+
+
+    /*
+     * Single line breaks
+     */
+    text = text.replace(
+        /\n/g,
+        "<br>"
+    );
+
+
+    return "<p>" + text + "</p>";
+}
+
+
+/* ==========================================
+   DISPLAY SECURITY ANALYSIS
+========================================== */
+
+function displaySecurity(data) {
+
+    const security =
+        data.security || {};
+
+    const risk =
+        data.risk ||
+        security.risk ||
+        {};
+
+    const injection =
+        data.injection ||
+        security.injection ||
+        {};
+
+
+    /*
+     * Privacy risk
+     */
+    document.getElementById(
+        "privacyRisk"
+    ).textContent =
+        `${risk.privacy_level || "LOW"} | Score: ${risk.privacy_score ?? 0}`;
+
+
+    /*
+     * Security risk
+     */
+    document.getElementById(
+        "securityRisk"
+    ).textContent =
+        `${risk.security_level || "LOW"} | Score: ${risk.security_score ?? 0}`;
+
+
+    /*
+     * Overall risk
+     */
+    document.getElementById(
+        "overallRisk"
+    ).textContent =
+        `${risk.overall_level || "LOW"} | Score: ${risk.overall_score ?? 0}`;
+
+
+    /*
+     * Security decision
+     */
+    document.getElementById(
+        "securityDecision"
+    ).textContent =
+        data.decision?.action ||
+        security.decision?.action ||
+        "ALLOW";
+
+
+    /* ==========================================
+       SENSITIVE DATA
+    ========================================== */
+
+    const sensitiveElement =
+        document.getElementById(
+            "sensitiveData"
         );
 
-        updateCounter();
+
+    if (
+        data.detected &&
+        data.detected.length > 0
+    ) {
+
+        sensitiveElement.innerHTML =
+            data.detected
+                .map(
+                    item =>
+                        `<p>🔴 ${escapeHtml(
+                            item.type
+                        )}
+                        (${escapeHtml(
+                            String(
+                                item.confidence || ""
+                            )
+                        )})</p>`
+                )
+                .join("");
+
+    } else {
+
+        sensitiveElement.textContent =
+            "No sensitive information detected.";
+
     }
 
 
-    function copySanitizedPrompt() {
+    /* ==========================================
+       PROMPT INJECTION
+    ========================================== */
 
-        const element =
-            document.getElementById("sanitized-prompt");
-
-        if (!element) {
-            return;
-        }
-
-        navigator.clipboard.writeText(
-            element.innerText
+    const injectionElement =
+        document.getElementById(
+            "injectionData"
         );
 
-        const button =
-            document.querySelector(".copy-button");
 
-        const originalText =
-            button.textContent;
+    const categories =
+        injection.categories || [];
 
-        button.textContent =
-            "COPIED";
 
-        setTimeout(function () {
+    if (categories.length > 0) {
 
-            button.textContent =
-                originalText;
+        injectionElement.innerHTML =
+            categories
+                .map(
+                    category =>
+                        `<p>⚠️ ${escapeHtml(
+                            category
+                        )}</p>`
+                )
+                .join("");
 
-        }, 1500);
+    } else {
+
+        injectionElement.textContent =
+            "No prompt injection detected.";
+
     }
+}
+
+
+/* ==========================================
+   GENERATE AI RESPONSE
+========================================== */
+
+async function generateResponse() {
+
+    const prompt =
+        promptInput.value.trim();
+
+
+    const provider =
+        document.getElementById(
+            "provider"
+        ).value;
+
+
+    const errorMessage =
+        document.getElementById(
+            "errorMessage"
+        );
+
+
+    const loading =
+        document.getElementById(
+            "loading"
+        );
+
+
+    const button =
+        document.getElementById(
+            "generateBtn"
+        );
+
+
+    /*
+     * Hide previous error
+     */
+    errorMessage.style.display =
+        "none";
+
+
+    /*
+     * Validate prompt
+     */
+    if (!prompt) {
+
+        errorMessage.textContent =
+            "Please enter a prompt.";
+
+        errorMessage.style.display =
+            "block";
+
+        return;
+    }
+
+
+    /*
+     * Show loading
+     */
+    loading.style.display =
+        "block";
+
+    button.disabled =
+        true;
+
+
+    try {
+
+        /*
+         * Send request to backend
+         */
+        const response =
+            await fetch(
+                "/api/generate",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        provider: provider
+                    })
+                }
+            );
+
+
+        /*
+         * Convert response to JSON
+         */
+        const data =
+            await response.json();
+
+
+        /*
+         * Handle backend errors
+         */
+        if (!response.ok) {
+
+            throw new Error(
+                data.error ||
+                "AI generation failed."
+            );
+        }
+
+
+        /* ==========================================
+           SECURITY SECTION
+        ========================================== */
+
+        document.getElementById(
+            "securitySection"
+        ).style.display =
+            "block";
+
+
+        displaySecurity(data);
+
+
+        /* ==========================================
+           PROMPT TRANSFORMATION
+        ========================================== */
+
+        document.getElementById(
+            "transformationSection"
+        ).style.display =
+            "block";
+
+
+        /*
+         * IMPORTANT:
+         *
+         * Backend returns:
+         *
+         * prompt:
+         * {
+         *     masked: ...,
+         *     optimized: ...
+         * }
+         *
+         * Therefore sanitized prompt
+         * uses data.prompt.masked.
+         */
+
+        document.getElementById(
+            "sanitizedPrompt"
+        ).textContent =
+            data.prompt?.masked || "";
+
+
+        document.getElementById(
+            "optimizedPrompt"
+        ).textContent =
+            data.prompt?.optimized || "";
+
+
+        /* ==========================================
+           TOKEN ANALYSIS
+        ========================================== */
+
+        document.getElementById(
+            "tokenSection"
+        ).style.display =
+            "block";
+
+
+        const token =
+            data.token_analysis || {};
+
+
+        document.getElementById(
+            "inputTokens"
+        ).textContent =
+            token.input_tokens ?? "-";
+
+
+        document.getElementById(
+            "estimatedOutput"
+        ).textContent =
+            token.estimated_output_tokens ?? "-";
+
+
+        document.getElementById(
+            "totalEstimated"
+        ).textContent =
+            token.total_estimated_tokens ?? "-";
+
+
+        document.getElementById(
+            "contextUsage"
+        ).textContent =
+            `${token.usage_percentage ?? 0}%`;
+
+
+        document.getElementById(
+            "tokenStatus"
+        ).textContent =
+            token.status || "-";
+
+
+        document.getElementById(
+            "tokenWarning"
+        ).textContent =
+            token.warning || "";
+
+
+        /* ==========================================
+           AI RESPONSE
+        ========================================== */
+
+        document.getElementById(
+            "responseSection"
+        ).style.display =
+            "block";
+
+
+        document.getElementById(
+            "responseProvider"
+        ).textContent =
+            data.provider || "-";
+
+
+        document.getElementById(
+            "responseModel"
+        ).textContent =
+            data.model || "-";
+
+
+        /*
+         * Render AI response
+         * as readable Markdown.
+         */
+        document.getElementById(
+            "aiResponse"
+        ).innerHTML =
+            renderMarkdown(
+                data.response || ""
+            );
+
+
+        /* ==========================================
+           ACTUAL TOKEN USAGE
+        ========================================== */
+
+        const usage =
+            data.usage || {};
+
+
+        document.getElementById(
+            "actualPromptTokens"
+        ).textContent =
+            usage.prompt_tokens ?? "-";
+
+
+        document.getElementById(
+            "actualCompletionTokens"
+        ).textContent =
+            usage.completion_tokens ?? "-";
+
+
+        document.getElementById(
+            "actualTotalTokens"
+        ).textContent =
+            usage.total_tokens ?? "-";
+
+
+        /*
+         * Scroll to response
+         */
+        document.getElementById(
+            "responseSection"
+        ).scrollIntoView({
+            behavior: "smooth"
+        });
+
+    }
+
+
+    catch (error) {
+
+        errorMessage.textContent =
+            error.message ||
+            "Something went wrong.";
+
+        errorMessage.style.display =
+            "block";
+
+    }
+
+
+    finally {
+
+        loading.style.display =
+            "none";
+
+        button.disabled =
+            false;
+
+    }
+}
+
+
+/* ==========================================
+   COPY AI RESPONSE
+========================================== */
+
+async function copyResponse() {
+
+    const response =
+        document.getElementById(
+            "aiResponse"
+        ).innerText;
+
+
+    try {
+
+        await navigator.clipboard.writeText(
+            response
+        );
+
+        alert(
+            "AI response copied!"
+        );
+
+    }
+
+
+    catch (error) {
+
+        alert(
+            "Unable to copy response."
+        );
+
+    }
+}
+
+
+/* ==========================================
+   HTML ESCAPING
+========================================== */
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
 
 </script>
 
 </body>
-
 </html>
+````

@@ -5,12 +5,18 @@ from pathlib import Path
 
 # Always store the database in the project root
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATABASE = BASE_DIR / "promptguard.db"
+DATABASE = BASE_DIR / "data" / "promptguard.db"
 
 
 def get_connection():
+    DATABASE.parent.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
     connection = sqlite3.connect(DATABASE)
     connection.row_factory = sqlite3.Row
+
     return connection
 
 

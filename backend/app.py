@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
@@ -10,6 +10,10 @@ from backend.risk_analyzer import analyze_risk
 from backend.injection_detector import detect_prompt_injection
 from backend.suggestions import generate_suggestions
 from backend.decision_engine import make_security_decision
+
+from backend.llm_router import LLMRouter
+from backend.prompt_optimizer import optimize_prompt
+from backend.token_analyzer import analyze_tokens
 
 from backend.database import (
     initialize_database,
@@ -42,15 +46,24 @@ app = Flask(
     static_folder="../frontend/static"
 )
 
+app.secret_key = os.getenv(
+    "FLASK_SECRET_KEY",
+    "promptguard-development-secret"
+)
+
 
 # ==========================================
 # RATE LIMITING
 # ==========================================
 
 limiter = Limiter(
-    key_func=get_remote_address,
+    get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"]
+    default_limits=[
+        "200 per day",
+        "50 per hour"
+    ],
+    storage_uri="memory://"
 )
 
 
@@ -73,7 +86,7 @@ def add_security_headers(response):
 
 
 # ==========================================
-# GLOBAL ERROR HANDLERS
+# ERROR HANDLERS
 # ==========================================
 
 @app.errorhandler(400)
@@ -124,6 +137,13 @@ initialize_database()
 
 
 # ==========================================
+# LLM ROUTER
+# ==========================================
+
+llm_router = LLMRouter()
+
+
+# ==========================================
 # CONFIGURATION
 # ==========================================
 
@@ -153,22 +173,13 @@ def authenticate_request():
 
 def analyze_prompt(prompt):
 
-    # ==========================================
-    # 1. DETECT SENSITIVE INFORMATION
-    # ==========================================
-
+    # 1. Detect sensitive information
     detected = detect_sensitive_data(prompt)
 
-    # ==========================================
-    # 2. MASK SENSITIVE INFORMATION
-    # ==========================================
-
+    # 2. Mask sensitive information
     masked = mask_data(prompt)
 
-    # ==========================================
-    # 3. DETECT PROMPT INJECTION
-    # ==========================================
-
+    # 3. Detect prompt injection
     injection = detect_prompt_injection(prompt)
 
     injection_categories = injection.get(
@@ -176,34 +187,22 @@ def analyze_prompt(prompt):
         []
     )
 
-    # ==========================================
-    # 4. CALCULATE RISK
-    # ==========================================
-
+    # 4. Calculate risk
     risk = analyze_risk(
         detected,
         injection_categories
     )
 
-    # ==========================================
-    # 5. MAKE SECURITY DECISION
-    # ==========================================
-
+    # 5. Make security decision
     decision = make_security_decision(risk)
 
-    # ==========================================
-    # 6. GENERATE RECOMMENDATIONS
-    # ==========================================
-
+    # 6. Generate recommendations
     suggestions = generate_suggestions(
         detected,
         injection.get("detected", False)
     )
 
-    # ==========================================
-    # 7. CREATE PRIVACY-SAFE DETECTION RESULT
-    # ==========================================
-
+    # 7. Privacy-safe detection results
     safe_detected = []
 
     for item in detected:
@@ -213,22 +212,18 @@ def analyze_prompt(prompt):
             "confidence": item["confidence"]
         })
 
-    # ==========================================
-    # 8. REMOVE RAW VALUES FROM RISK DETAILS
-    # ==========================================
-
+    # 8. Privacy-safe risk details
     safe_detected_details = []
 
-    for item in risk.get("detected_details", []):
+    for item in risk.get(
+        "detected_details",
+        []
+    ):
 
         safe_detected_details.append({
             "type": item["type"],
             "severity": item["severity"]
         })
-
-    # ==========================================
-    # 9. CREATE SAFE RISK OBJECT
-    # ==========================================
 
     safe_risk = risk.copy()
 
@@ -236,24 +231,13 @@ def analyze_prompt(prompt):
         safe_detected_details
     )
 
-    # ==========================================
-    # 10. RETURN RESULT
-    # ==========================================
-
     return {
-        # Needed by the web dashboard
         "original": prompt,
-
         "masked": masked,
-
         "detected": safe_detected,
-
         "injection": injection,
-
         "risk": safe_risk,
-
         "decision": decision,
-
         "suggestions": suggestions
     }
 
@@ -264,10 +248,6 @@ def analyze_prompt(prompt):
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-
-    # ==========================================
-    # DEFAULT VALUES
-    # ==========================================
 
     result = {
 
@@ -286,13 +266,10 @@ def index():
         "risk": {
             "privacy_score": 0,
             "privacy_level": "LOW",
-
             "security_score": 0,
             "security_level": "LOW",
-
             "overall_score": 0,
             "overall_level": "LOW",
-
             "detected_details": [],
             "injection_details": []
         },
@@ -308,10 +285,6 @@ def index():
         "suggestions": []
     }
 
-    # ==========================================
-    # PROCESS SUBMITTED PROMPT
-    # ==========================================
-
     if request.method == "POST":
 
         prompt = request.form.get(
@@ -319,20 +292,12 @@ def index():
             ""
         ).strip()
 
-        # ==========================================
-        # EMPTY PROMPT
-        # ==========================================
-
         if not prompt:
 
             return render_template(
                 "index.html",
                 **result
             )
-
-        # ==========================================
-        # PROMPT LENGTH VALIDATION
-        # ==========================================
 
         if len(prompt) > MAX_PROMPT_LENGTH:
 
@@ -356,25 +321,13 @@ def index():
                 **result
             )
 
-        # ==========================================
-        # ANALYZE SUBMITTED PROMPT
-        # ==========================================
-
         result = analyze_prompt(prompt)
-
-        # ==========================================
-        # SAVE SCAN
-        # ==========================================
 
         save_scan(
             result["masked"],
             result["risk"],
             result["injection"]["detected"]
         )
-
-    # ==========================================
-    # RENDER WEB PAGE
-    # ==========================================
 
     return render_template(
         "index.html",
@@ -383,7 +336,7 @@ def index():
 
 
 # ==========================================
-# REST API
+# REST API - ANALYZE PROMPT
 # ==========================================
 
 @app.route(
@@ -393,19 +346,11 @@ def index():
 @limiter.limit("30 per minute")
 def api_analyze():
 
-    # ==========================================
-    # API AUTHENTICATION
-    # ==========================================
-
     if not authenticate_request():
 
         return jsonify({
             "error": "Unauthorized"
         }), 401
-
-    # ==========================================
-    # READ JSON REQUEST
-    # ==========================================
 
     if not request.is_json:
 
@@ -417,19 +362,11 @@ def api_analyze():
         silent=True
     )
 
-    # ==========================================
-    # INVALID JSON
-    # ==========================================
-
     if not isinstance(data, dict):
 
         return jsonify({
             "error": "Invalid JSON body."
         }), 400
-
-    # ==========================================
-    # MISSING PROMPT
-    # ==========================================
 
     if "prompt" not in data:
 
@@ -442,9 +379,111 @@ def api_analyze():
 
     prompt = data["prompt"]
 
+    if not isinstance(prompt, str):
+
+        return jsonify({
+            "error": "Prompt must be a string."
+        }), 400
+
+    prompt = prompt.strip()
+
+    if not prompt:
+
+        return jsonify({
+            "error": "Prompt cannot be empty."
+        }), 400
+
+    if len(prompt) > MAX_PROMPT_LENGTH:
+
+        return jsonify({
+            "error": (
+                f"Prompt is too long. "
+                f"Maximum length is "
+                f"{MAX_PROMPT_LENGTH} characters."
+            )
+        }), 413
+
+    result = analyze_prompt(prompt)
+
+    save_scan(
+        result["masked"],
+        result["risk"],
+        result["injection"]["detected"]
+    )
+
+    api_result = result.copy()
+
+    api_result.pop(
+        "original",
+        None
+    )
+
+    return jsonify(api_result)
+
+
+# ==========================================
+# AVAILABLE LLM PROVIDERS
+# ==========================================
+
+@app.route(
+    "/api/providers",
+    methods=["GET"]
+)
+def api_providers():
+
+    return jsonify({
+        "providers": llm_router.available_providers()
+    })
+
+
+# ==========================================
+# GENERATE AI RESPONSE
+# ==========================================
+
+@app.route(
+    "/api/generate",
+    methods=["POST"]
+)
+@limiter.limit("10 per minute")
+def api_generate():
+
     # ==========================================
-    # PROMPT MUST BE A STRING
+    # FRONTEND REQUEST
     # ==========================================
+    #
+    # This endpoint is called by our own
+    # frontend. The frontend must NOT receive
+    # the PromptGuard API key.
+    #
+    # External clients should use /api/analyze
+    # with X-API-Key authentication.
+    #
+
+    # ==========================================
+    # JSON VALIDATION
+    # ==========================================
+
+    if not request.is_json:
+
+        return jsonify({
+            "error": "Request must contain JSON."
+        }), 400
+
+    data = request.get_json(
+        silent=True
+    )
+
+    if not isinstance(data, dict):
+
+        return jsonify({
+            "error": "Invalid JSON body."
+        }), 400
+
+    # ==========================================
+    # GET PROMPT
+    # ==========================================
+
+    prompt = data.get("prompt")
 
     if not isinstance(prompt, str):
 
@@ -454,19 +493,11 @@ def api_analyze():
 
     prompt = prompt.strip()
 
-    # ==========================================
-    # EMPTY PROMPT
-    # ==========================================
-
     if not prompt:
 
         return jsonify({
             "error": "Prompt cannot be empty."
         }), 400
-
-    # ==========================================
-    # MAXIMUM PROMPT LENGTH
-    # ==========================================
 
     if len(prompt) > MAX_PROMPT_LENGTH:
 
@@ -479,37 +510,194 @@ def api_analyze():
         }), 413
 
     # ==========================================
-    # ANALYZE PROMPT
+    # SELECT PROVIDER
     # ==========================================
 
-    result = analyze_prompt(prompt)
+    provider = data.get(
+        "provider",
+        "groq"
+    )
+
+    if not isinstance(provider, str):
+
+        return jsonify({
+            "error": "Provider must be a string."
+        }), 400
+
+    provider = provider.lower().strip()
+
+    if provider not in llm_router.SUPPORTED_PROVIDERS:
+
+        return jsonify({
+            "error": (
+                f"Unsupported provider: {provider}. "
+                f"Supported providers: "
+                f"{', '.join(llm_router.SUPPORTED_PROVIDERS.keys())}"
+            )
+        }), 400
 
     # ==========================================
-    # SAVE SCAN
+    # SECURITY ANALYSIS
+    # ==========================================
+
+    analysis = analyze_prompt(prompt)
+
+    # ==========================================
+    # SECURITY DECISION
+    # ==========================================
+
+    decision = analysis["decision"]
+
+    if decision.get("action", "").upper() == "BLOCK":
+
+        return jsonify({
+            "error": "Prompt blocked by PromptGuard.",
+            "decision": decision,
+            "risk": analysis["risk"],
+            "injection": {
+                "detected": analysis[
+                    "injection"
+                ].get("detected", False),
+                "categories": analysis[
+                    "injection"
+                ].get("categories", [])
+            },
+            "suggestions": analysis[
+                "suggestions"
+            ]
+        }), 403
+
+    # ==========================================
+    # USE MASKED PROMPT
+    # ==========================================
+
+    masked_prompt = analysis["masked"]
+
+    # ==========================================
+    # OPTIMIZE MASKED PROMPT
+    # ==========================================
+
+    optimized = optimize_prompt(
+        masked_prompt
+    )
+
+    optimized_prompt = optimized[
+        "optimized_prompt"
+    ]
+
+    # ==========================================
+    # TOKEN ANALYSIS
+    # ==========================================
+
+    token_analysis = analyze_tokens(
+        optimized_prompt,
+        provider=provider,
+        estimated_output_tokens=1000
+    )
+
+    # ==========================================
+    # CONTEXT LIMIT CHECK
+    # ==========================================
+
+    if token_analysis["status"] == "EXCEEDED":
+
+        return jsonify({
+            "error": (
+                "Prompt blocked because the "
+                "estimated token usage exceeds "
+                "the selected model context limit."
+            ),
+            "token_analysis": token_analysis
+        }), 413
+
+    # ==========================================
+    # CALL LLM
+    # ==========================================
+
+    try:
+
+        llm_result = llm_router.generate(
+            provider=provider,
+            prompt=optimized_prompt,
+            temperature=0.2,
+            max_tokens=1000
+        )
+
+    except ValueError as error:
+
+        return jsonify({
+            "error": str(error)
+        }), 400
+
+    except Exception:
+
+        return jsonify({
+            "error": (
+                "LLM provider request failed."
+            )
+        }), 502
+
+    # ==========================================
+    # SAVE SECURITY SCAN
     # ==========================================
 
     save_scan(
-        result["masked"],
-        result["risk"],
-        result["injection"]["detected"]
+        masked_prompt,
+        analysis["risk"],
+        analysis["injection"]["detected"]
     )
 
     # ==========================================
-    # REMOVE ORIGINAL PROMPT FROM API RESPONSE
+    # RETURN RESPONSE
     # ==========================================
 
-    api_result = result.copy()
+    return jsonify({
 
-    api_result.pop(
-        "original",
-        None
-    )
+        "provider": llm_result.get(
+            "provider"
+        ),
 
-    # ==========================================
-    # RETURN PRIVACY-SAFE API RESULT
-    # ==========================================
+        "model": llm_result.get(
+            "model"
+        ),
 
-    return jsonify(api_result)
+        "response": llm_result.get(
+            "response"
+        ),
+
+        "usage": llm_result.get(
+            "usage",
+            {}
+        ),
+
+        "security": {
+            "risk": analysis["risk"],
+
+            "decision": analysis["decision"],
+
+            "injection": {
+                "detected": analysis[
+                    "injection"
+                ].get("detected", False),
+
+                "categories": analysis[
+                    "injection"
+                ].get("categories", [])
+            }
+        },
+
+        "prompt": {
+            "masked": masked_prompt,
+
+            "optimized": optimized_prompt,
+
+            "task_type": optimized[
+                "task_type"
+            ]
+        },
+
+        "token_analysis": token_analysis
+    })
 
 
 # ==========================================
@@ -529,7 +717,7 @@ def health():
 
 
 # ==========================================
-# SCAN HISTORY WEB PAGE
+# HISTORY PAGE
 # ==========================================
 
 @app.route("/history")
@@ -544,7 +732,7 @@ def history():
 
 
 # ==========================================
-# SCAN HISTORY REST API
+# HISTORY API
 # ==========================================
 
 @app.route(
@@ -606,13 +794,15 @@ def api_history():
 
 if __name__ == "__main__":
 
-    app.run(
+    from waitress import serve
+
+    serve(
+        app,
         host="0.0.0.0",
         port=int(
             os.getenv(
                 "PORT",
                 5000
             )
-        ),
-        debug=False
+        )
     )
