@@ -1,0 +1,1030 @@
+````html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PromptGuard AI</title>
+
+    <style>
+        .ai-response-content {
+            line-height: 1.7;
+            white-space: normal;
+        }
+
+        .ai-response-content h1,
+        .ai-response-content h2,
+        .ai-response-content h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .ai-response-content p {
+            margin: 10px 0;
+        }
+
+        .ai-response-content ul,
+        .ai-response-content ol {
+            margin: 10px 0 10px 25px;
+        }
+
+        .ai-response-content li {
+            margin: 5px 0;
+        }
+
+        .ai-response-content code {
+            padding: 2px 5px;
+            border-radius: 4px;
+        }
+
+        .ai-response-content pre {
+            padding: 12px;
+            overflow-x: auto;
+            border-radius: 8px;
+        }
+
+        .ai-response-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .ai-response-content th,
+        .ai-response-content td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <header>
+        <h1>🛡️ PromptGuard</h1>
+        <p>AI Security Gateway</p>
+
+        <nav>
+            <a href="/">🔍 Analyze</a>
+            <a href="/history">📜 History</a>
+        </nav>
+
+        <div>
+            <strong>System Protected</strong>
+            <br>
+            PromptGuard Active
+        </div>
+    </header>
+
+
+    <main>
+
+        <!-- ==========================================
+             INTRODUCTION
+        =========================================== -->
+
+        <section>
+            <h2>Prompt Security & AI Generation</h2>
+
+            <p>
+                Protect your data, optimize your prompts,
+                and securely interact with AI.
+            </p>
+        </section>
+
+
+        <!-- ==========================================
+             PROMPT INPUT
+        =========================================== -->
+
+        <section>
+
+            <h2>Enter Your Prompt</h2>
+
+            <p>
+                PromptGuard will analyze and secure your prompt
+                before sending it to an AI model.
+            </p>
+
+            <textarea
+                id="promptInput"
+                maxlength="10000"
+                rows="8"
+                placeholder="Enter your prompt here..."
+            ></textarea>
+
+            <div>
+                <span id="charCount">0</span> / 10000
+            </div>
+
+
+            <br>
+
+            <label for="provider">
+                <strong>AI Provider</strong>
+            </label>
+
+            <select id="provider">
+                <option value="groq">Groq</option>
+                <option value="ollama">Ollama</option>
+            </select>
+
+
+            <br><br>
+
+            <button
+                id="generateBtn"
+                onclick="generateResponse()"
+            >
+                🚀 Generate AI Response
+            </button>
+
+            <p id="loading" style="display:none;">
+                ⏳ PromptGuard is analyzing and generating...
+            </p>
+
+            <p
+                id="errorMessage"
+                style="display:none;"
+            ></p>
+
+        </section>
+
+
+        <!-- ==========================================
+             SECURITY ANALYSIS
+        =========================================== -->
+
+        <section
+            id="securitySection"
+            style="display:none;"
+        >
+
+            <h2>🛡️ Security Analysis</h2>
+
+            <p>
+                PromptGuard security checks performed before AI generation.
+            </p>
+
+
+            <div>
+                <strong>Privacy Risk</strong>
+                <p id="privacyRisk">-</p>
+            </div>
+
+
+            <div>
+                <strong>Security Risk</strong>
+                <p id="securityRisk">-</p>
+            </div>
+
+
+            <div>
+                <strong>Overall Risk</strong>
+                <p id="overallRisk">-</p>
+            </div>
+
+
+            <div>
+                <strong>Security Decision</strong>
+                <p id="securityDecision">-</p>
+            </div>
+
+
+            <h3>🔐 Sensitive Data</h3>
+
+            <div id="sensitiveData">
+                -
+            </div>
+
+
+            <h3>🚨 Prompt Injection</h3>
+
+            <div id="injectionData">
+                -
+            </div>
+
+        </section>
+
+
+        <!-- ==========================================
+             PROMPT TRANSFORMATION
+        =========================================== -->
+
+        <section
+            id="transformationSection"
+            style="display:none;"
+        >
+
+            <h2>✨ Prompt Transformation</h2>
+
+            <p>
+                Your prompt after security processing and optimization.
+            </p>
+
+
+            <h3>🔒 Sanitized Prompt</h3>
+
+            <pre id="sanitizedPrompt"></pre>
+
+
+            <h3>✨ Optimized Prompt</h3>
+
+            <pre id="optimizedPrompt"></pre>
+
+        </section>
+
+
+        <!-- ==========================================
+             TOKEN ANALYSIS
+        =========================================== -->
+
+        <section
+            id="tokenSection"
+            style="display:none;"
+        >
+
+            <h2>📊 Token & Context Analysis</h2>
+
+            <p>
+                Estimated usage before sending the prompt
+                to the selected model.
+            </p>
+
+
+            <p>
+                <strong>Input Tokens</strong>
+                <span id="inputTokens">-</span>
+            </p>
+
+
+            <p>
+                <strong>Estimated Output</strong>
+                <span id="estimatedOutput">-</span>
+            </p>
+
+
+            <p>
+                <strong>Total Estimated</strong>
+                <span id="totalEstimated">-</span>
+            </p>
+
+
+            <p>
+                <strong>Context Usage</strong>
+                <span id="contextUsage">-</span>
+            </p>
+
+
+            <p>
+                <strong>Status</strong>
+                <span id="tokenStatus">-</span>
+            </p>
+
+
+            <p id="tokenWarning"></p>
+
+        </section>
+
+
+        <!-- ==========================================
+             AI RESPONSE
+        =========================================== -->
+
+        <section
+            id="responseSection"
+            style="display:none;"
+        >
+
+            <h2>🤖 AI Response</h2>
+
+
+            <p>
+                Generated by
+                <strong id="responseProvider">-</strong>
+                /
+                <strong id="responseModel">-</strong>
+            </p>
+
+
+            <h3>
+                AI Generated Answer
+
+                <button onclick="copyResponse()">
+                    📋 Copy
+                </button>
+            </h3>
+
+
+            <div
+                id="aiResponse"
+                class="ai-response-content"
+            ></div>
+
+
+            <h3>📈 Actual Model Usage</h3>
+
+
+            <p>
+                <strong>Prompt Tokens</strong>
+                <span id="actualPromptTokens">-</span>
+            </p>
+
+
+            <p>
+                <strong>Completion Tokens</strong>
+                <span id="actualCompletionTokens">-</span>
+            </p>
+
+
+            <p>
+                <strong>Total Tokens</strong>
+                <span id="actualTotalTokens">-</span>
+            </p>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<script>
+
+/* ==========================================
+   PROMPT INPUT
+========================================== */
+
+const promptInput =
+    document.getElementById("promptInput");
+
+const charCount =
+    document.getElementById("charCount");
+
+
+promptInput.addEventListener(
+    "input",
+    function () {
+
+        charCount.textContent =
+            promptInput.value.length;
+
+    }
+);
+
+
+/* ==========================================
+   MARKDOWN RENDERER
+========================================== */
+
+function renderMarkdown(text) {
+
+    if (!text) {
+        return "";
+    }
+
+
+    /*
+     * Remove unnecessary escaping
+     */
+    text = text
+        .replace(/\\\*\*/g, "**")
+        .replace(/\\\*/g, "*")
+        .replace(/\\#/g, "#")
+        .replace(/\\`/g, "`")
+        .replace(/\\-/g, "-");
+
+
+    /*
+     * Escape HTML
+     */
+    text = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+
+    /*
+     * Code blocks
+     */
+    text = text.replace(
+        /```([\s\S]*?)```/g,
+        "<pre><code>$1</code></pre>"
+    );
+
+
+    /*
+     * Headings
+     */
+    text = text.replace(
+        /^### (.*)$/gm,
+        "<h3>$1</h3>"
+    );
+
+
+    text = text.replace(
+        /^## (.*)$/gm,
+        "<h2>$1</h2>"
+    );
+
+
+    text = text.replace(
+        /^# (.*)$/gm,
+        "<h1>$1</h1>"
+    );
+
+
+    /*
+     * Bold
+     */
+    text = text.replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong>$1</strong>"
+    );
+
+
+    /*
+     * Italic
+     */
+    text = text.replace(
+        /\*(.*?)\*/g,
+        "<em>$1</em>"
+    );
+
+
+    /*
+     * Inline code
+     */
+    text = text.replace(
+        /`([^`]+)`/g,
+        "<code>$1</code>"
+    );
+
+
+    /*
+     * Bullet points
+     */
+    text = text.replace(
+        /^[-•] (.*)$/gm,
+        "<li>$1</li>"
+    );
+
+
+    /*
+     * Numbered points
+     */
+    text = text.replace(
+        /^\d+\.\s+(.*)$/gm,
+        "<li>$1</li>"
+    );
+
+
+    /*
+     * Convert consecutive list items
+     * into an unordered list.
+     */
+    text = text.replace(
+        /(<li>.*<\/li>)/gs,
+        "<ul>$1</ul>"
+    );
+
+
+    /*
+     * Horizontal rule
+     */
+    text = text.replace(
+        /^---$/gm,
+        "<hr>"
+    );
+
+
+    /*
+     * Paragraph spacing
+     */
+    text = text.replace(
+        /\n{2,}/g,
+        "</p><p>"
+    );
+
+
+    /*
+     * Single line breaks
+     */
+    text = text.replace(
+        /\n/g,
+        "<br>"
+    );
+
+
+    return "<p>" + text + "</p>";
+}
+
+
+/* ==========================================
+   DISPLAY SECURITY ANALYSIS
+========================================== */
+
+function displaySecurity(data) {
+
+    const security =
+        data.security || {};
+
+    const risk =
+        data.risk ||
+        security.risk ||
+        {};
+
+    const injection =
+        data.injection ||
+        security.injection ||
+        {};
+
+
+    /*
+     * Privacy risk
+     */
+    document.getElementById(
+        "privacyRisk"
+    ).textContent =
+        `${risk.privacy_level || "LOW"} | Score: ${risk.privacy_score ?? 0}`;
+
+
+    /*
+     * Security risk
+     */
+    document.getElementById(
+        "securityRisk"
+    ).textContent =
+        `${risk.security_level || "LOW"} | Score: ${risk.security_score ?? 0}`;
+
+
+    /*
+     * Overall risk
+     */
+    document.getElementById(
+        "overallRisk"
+    ).textContent =
+        `${risk.overall_level || "LOW"} | Score: ${risk.overall_score ?? 0}`;
+
+
+    /*
+     * Security decision
+     */
+    document.getElementById(
+        "securityDecision"
+    ).textContent =
+        data.decision?.action ||
+        security.decision?.action ||
+        "ALLOW";
+
+
+    /* ==========================================
+       SENSITIVE DATA
+    ========================================== */
+
+    const sensitiveElement =
+        document.getElementById(
+            "sensitiveData"
+        );
+
+
+    if (
+        data.detected &&
+        data.detected.length > 0
+    ) {
+
+        sensitiveElement.innerHTML =
+            data.detected
+                .map(
+                    item =>
+                        `<p>🔴 ${escapeHtml(
+                            item.type
+                        )}
+                        (${escapeHtml(
+                            String(
+                                item.confidence || ""
+                            )
+                        )})</p>`
+                )
+                .join("");
+
+    } else {
+
+        sensitiveElement.textContent =
+            "No sensitive information detected.";
+
+    }
+
+
+    /* ==========================================
+       PROMPT INJECTION
+    ========================================== */
+
+    const injectionElement =
+        document.getElementById(
+            "injectionData"
+        );
+
+
+    const categories =
+        injection.categories || [];
+
+
+    if (categories.length > 0) {
+
+        injectionElement.innerHTML =
+            categories
+                .map(
+                    category =>
+                        `<p>⚠️ ${escapeHtml(
+                            category
+                        )}</p>`
+                )
+                .join("");
+
+    } else {
+
+        injectionElement.textContent =
+            "No prompt injection detected.";
+
+    }
+}
+
+
+/* ==========================================
+   GENERATE AI RESPONSE
+========================================== */
+
+async function generateResponse() {
+
+    const prompt =
+        promptInput.value.trim();
+
+
+    const provider =
+        document.getElementById(
+            "provider"
+        ).value;
+
+
+    const errorMessage =
+        document.getElementById(
+            "errorMessage"
+        );
+
+
+    const loading =
+        document.getElementById(
+            "loading"
+        );
+
+
+    const button =
+        document.getElementById(
+            "generateBtn"
+        );
+
+
+    /*
+     * Hide previous error
+     */
+    errorMessage.style.display =
+        "none";
+
+
+    /*
+     * Validate prompt
+     */
+    if (!prompt) {
+
+        errorMessage.textContent =
+            "Please enter a prompt.";
+
+        errorMessage.style.display =
+            "block";
+
+        return;
+    }
+
+
+    /*
+     * Show loading
+     */
+    loading.style.display =
+        "block";
+
+    button.disabled =
+        true;
+
+
+    try {
+
+        /*
+         * Send request to backend
+         */
+        const response =
+            await fetch(
+                "/api/generate",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        provider: provider
+                    })
+                }
+            );
+
+
+        /*
+         * Convert response to JSON
+         */
+        const data =
+            await response.json();
+
+
+        /*
+         * Handle backend errors
+         */
+        if (!response.ok) {
+
+            throw new Error(
+                data.error ||
+                "AI generation failed."
+            );
+        }
+
+
+        /* ==========================================
+           SECURITY SECTION
+        ========================================== */
+
+        document.getElementById(
+            "securitySection"
+        ).style.display =
+            "block";
+
+
+        displaySecurity(data);
+
+
+        /* ==========================================
+           PROMPT TRANSFORMATION
+        ========================================== */
+
+        document.getElementById(
+            "transformationSection"
+        ).style.display =
+            "block";
+
+
+        /*
+         * IMPORTANT:
+         *
+         * Backend returns:
+         *
+         * prompt:
+         * {
+         *     masked: ...,
+         *     optimized: ...
+         * }
+         *
+         * Therefore sanitized prompt
+         * uses data.prompt.masked.
+         */
+
+        document.getElementById(
+            "sanitizedPrompt"
+        ).textContent =
+            data.prompt?.masked || "";
+
+
+        document.getElementById(
+            "optimizedPrompt"
+        ).textContent =
+            data.prompt?.optimized || "";
+
+
+        /* ==========================================
+           TOKEN ANALYSIS
+        ========================================== */
+
+        document.getElementById(
+            "tokenSection"
+        ).style.display =
+            "block";
+
+
+        const token =
+            data.token_analysis || {};
+
+
+        document.getElementById(
+            "inputTokens"
+        ).textContent =
+            token.input_tokens ?? "-";
+
+
+        document.getElementById(
+            "estimatedOutput"
+        ).textContent =
+            token.estimated_output_tokens ?? "-";
+
+
+        document.getElementById(
+            "totalEstimated"
+        ).textContent =
+            token.total_estimated_tokens ?? "-";
+
+
+        document.getElementById(
+            "contextUsage"
+        ).textContent =
+            `${token.usage_percentage ?? 0}%`;
+
+
+        document.getElementById(
+            "tokenStatus"
+        ).textContent =
+            token.status || "-";
+
+
+        document.getElementById(
+            "tokenWarning"
+        ).textContent =
+            token.warning || "";
+
+
+        /* ==========================================
+           AI RESPONSE
+        ========================================== */
+
+        document.getElementById(
+            "responseSection"
+        ).style.display =
+            "block";
+
+
+        document.getElementById(
+            "responseProvider"
+        ).textContent =
+            data.provider || "-";
+
+
+        document.getElementById(
+            "responseModel"
+        ).textContent =
+            data.model || "-";
+
+
+        /*
+         * Render AI response
+         * as readable Markdown.
+         */
+        document.getElementById(
+            "aiResponse"
+        ).innerHTML =
+            renderMarkdown(
+                data.response || ""
+            );
+
+
+        /* ==========================================
+           ACTUAL TOKEN USAGE
+        ========================================== */
+
+        const usage =
+            data.usage || {};
+
+
+        document.getElementById(
+            "actualPromptTokens"
+        ).textContent =
+            usage.prompt_tokens ?? "-";
+
+
+        document.getElementById(
+            "actualCompletionTokens"
+        ).textContent =
+            usage.completion_tokens ?? "-";
+
+
+        document.getElementById(
+            "actualTotalTokens"
+        ).textContent =
+            usage.total_tokens ?? "-";
+
+
+        /*
+         * Scroll to response
+         */
+        document.getElementById(
+            "responseSection"
+        ).scrollIntoView({
+            behavior: "smooth"
+        });
+
+    }
+
+
+    catch (error) {
+
+        errorMessage.textContent =
+            error.message ||
+            "Something went wrong.";
+
+        errorMessage.style.display =
+            "block";
+
+    }
+
+
+    finally {
+
+        loading.style.display =
+            "none";
+
+        button.disabled =
+            false;
+
+    }
+}
+
+
+/* ==========================================
+   COPY AI RESPONSE
+========================================== */
+
+async function copyResponse() {
+
+    const response =
+        document.getElementById(
+            "aiResponse"
+        ).innerText;
+
+
+    try {
+
+        await navigator.clipboard.writeText(
+            response
+        );
+
+        alert(
+            "AI response copied!"
+        );
+
+    }
+
+
+    catch (error) {
+
+        alert(
+            "Unable to copy response."
+        );
+
+    }
+}
+
+
+/* ==========================================
+   HTML ESCAPING
+========================================== */
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
+
+</script>
+
+</body>
+</html>
+````

@@ -336,6 +336,83 @@ def index():
 
 
 # ==========================================
+# FRONTEND - ANALYZE PROMPT
+# ==========================================
+
+@app.route(
+    "/api/frontend/analyze",
+    methods=["POST"]
+)
+@limiter.limit("30 per minute")
+def frontend_analyze():
+    """
+    Same-origin security analysis for the PromptGuard web UI.
+
+    The browser does not receive PROMPTGUARD_API_KEY.
+    This route directly uses the internal analyze_prompt() pipeline.
+    """
+
+    if not request.is_json:
+        return jsonify({
+            "error": "Request must contain JSON."
+        }), 400
+
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({
+            "error": "Invalid JSON body."
+        }), 400
+
+    prompt = data.get("prompt")
+
+    if not isinstance(prompt, str):
+        return jsonify({
+            "error": "Prompt must be a string."
+        }), 400
+
+    prompt = prompt.strip()
+
+    if not prompt:
+        return jsonify({
+            "error": "Prompt cannot be empty."
+        }), 400
+
+    if len(prompt) > MAX_PROMPT_LENGTH:
+        return jsonify({
+            "error": (
+                f"Prompt is too long. "
+                f"Maximum length is "
+                f"{MAX_PROMPT_LENGTH} characters."
+            )
+        }), 413
+
+    try:
+        result = analyze_prompt(prompt)
+
+        # The browser does not need the original prompt returned.
+        result.pop("original", None)
+
+        # Save the same privacy-safe scan used by the API.
+        save_scan(
+            result["masked"],
+            result["risk"],
+            result["injection"]["detected"]
+        )
+
+        return jsonify(result)
+
+    except Exception:
+        app.logger.exception(
+            "Frontend security analysis failed."
+        )
+
+        return jsonify({
+            "error": "Security analysis failed."
+        }), 500
+
+
+# ==========================================
 # REST API - ANALYZE PROMPT
 # ==========================================
 
