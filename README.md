@@ -659,6 +659,51 @@ The main architectural lesson was learning how multiple focused components can b
 
 Screenshots demonstrating the following workflows can be added to the `docs/` directory:
 
+---
+
+## Demo
+
+PromptGuard provides three core security outcomes before a prompt reaches an AI provider.
+
+### 1. Safe Prompt — ALLOW
+
+A normal prompt is analyzed and allowed through the security pipeline before being processed by Ollama.
+
+![PromptGuard Allow](docs/screenshots/allow-ollama.png)
+
+### 2. Sensitive Data — SANITIZE
+
+PromptGuard detects sensitive information such as email addresses and applies a privacy-focused sanitization decision.
+
+![PromptGuard Sanitize](docs/screenshots/sanitize.png)
+
+### 3. Prompt Injection — BLOCK
+
+PromptGuard detects instruction-override patterns and blocks potentially malicious prompt-injection attempts.
+
+![PromptGuard Block](docs/screenshots/block-injection.png)
+
+---
+
+## Security Pipeline
+
+```text
+User Prompt
+     ↓
+Sensitive Data Detection
+     ↓
+Prompt Injection Detection
+     ↓
+Risk Analysis
+     ↓
+Security Decision
+     ↓
+Sanitize / Allow / Block
+     ↓
+LLM Provider
+     ↓
+AI Response
+
 ### 1. Safe Prompt
 
 ```text
