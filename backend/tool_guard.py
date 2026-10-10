@@ -1,6 +1,6 @@
-
 """Allowlist-based authorization for AI tool calls."""
 
+import math
 from typing import Any
 
 
@@ -30,7 +30,7 @@ def authorize_tool_call(
     permissions: set[str] | None = None,
     approved: bool = False,
 ) -> dict[str, Any]:
-    """Authorize a tool call without executing the tool."""
+    """Authorize a tool call without executing it."""
 
     permissions = permissions or set()
 
@@ -42,6 +42,7 @@ def authorize_tool_call(
             "tool_name": tool_name,
         }
 
+    # Only allow registered tools.
     if not isinstance(tool_name, str) or tool_name not in TOOL_REGISTRY:
         return deny("TOOL-001", "Tool is not allowlisted.")
 
@@ -63,10 +64,11 @@ def authorize_tool_call(
             f"Unexpected arguments: {sorted(unexpected)}",
         )
 
+    # Validate all argument types and reject non-finite numbers.
     for name, expected_type in required.items():
         value = arguments[name]
 
-        if expected_type == str:
+        if expected_type is str:
             valid = isinstance(value, str) and bool(value.strip())
         else:
             valid = (
@@ -74,24 +76,30 @@ def authorize_tool_call(
                 and not isinstance(value, bool)
             )
 
+            if valid:
+                try:
+                    valid = math.isfinite(float(value))
+                except (OverflowError, TypeError, ValueError):
+                    valid = False
+
         if not valid:
             return deny("TOOL-002", f"Invalid argument: {name}")
 
+    # Validate calculator operations.
     if tool_name == "calculator":
-        if arguments["operation"] not in {
-            "add", "subtract", "multiply", "divide"
-        }:
+        operation = arguments["operation"]
+
+        if operation not in {"add", "subtract", "multiply", "divide"}:
             return deny("TOOL-002", "Unsupported calculator operation.")
 
-        if (
-            arguments["operation"] == "divide"
-            and arguments["b"] == 0
-        ):
+        if operation == "divide" and arguments["b"] == 0:
             return deny("TOOL-002", "Division by zero is not permitted.")
 
+    # Check server-configured permissions.
     if spec["permission"] not in permissions:
         return deny("TOOL-003", "Required permission is missing.")
 
+    # Sensitive operations require explicit approval.
     if spec["requires_approval"] and not approved:
         return {
             "action": "REQUIRE_APPROVAL",

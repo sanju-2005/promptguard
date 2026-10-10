@@ -558,6 +558,128 @@ def api_authorize_tool():
         "message": "Authorization check only; no tool was executed.",
     }), status_code
 
+# ==========================================
+# CONTROLLED TOOL EXECUTION
+# ==========================================
+@app.route("/api/tools/execute", methods=["POST"])
+@limiter.limit("10 per minute")
+def api_execute_tool():
+    """Execute an allowlisted tool only after authorization."""
+
+    import math
+
+    if not authenticate_request():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if not request.is_json:
+        return jsonify({"error": "Request must contain JSON."}), 400
+
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({"error": "Invalid JSON body."}), 400
+
+    tool_name = data.get("tool_name")
+    arguments = data.get("arguments", {})
+
+    if not isinstance(tool_name, str) or not tool_name.strip():
+        return jsonify({
+            "error": "tool_name must be a non-empty string."
+        }), 400
+
+    if not isinstance(arguments, dict):
+        return jsonify({
+            "error": "arguments must be a JSON object."
+        }), 400
+
+    # Permissions must come from trusted server configuration.
+    configured_permissions = os.getenv(
+        "PROMPTGUARD_TOOL_PERMISSIONS",
+        "tool:calculator",
+    )
+
+    permissions = {
+        item.strip()
+        for item in configured_permissions.split(",")
+        if item.strip()
+    }
+
+    # Sensitive actions require a separate server-configured token.
+    approval_token = os.getenv(
+        "PROMPTGUARD_TOOL_APPROVAL_TOKEN",
+        "",
+    )
+
+    provided_approval = request.headers.get(
+        "X-Tool-Approval",
+        "",
+    )
+
+    approved = bool(approval_token) and hmac.compare_digest(
+        provided_approval,
+        approval_token,
+    )
+
+    # Authorization always happens before execution.
+    decision = authorize_tool_call(
+        tool_name=tool_name,
+        arguments=arguments,
+        permissions=permissions,
+        approved=approved,
+    )
+
+    if decision.get("action") != "ALLOW":
+        return jsonify({
+            "decision": decision,
+            "executed": False,
+            "message": "Tool execution denied or requires approval.",
+        }), 403
+
+    # Only the explicitly implemented calculator can execute.
+    if tool_name != "calculator":
+        return jsonify({
+            "decision": decision,
+            "executed": False,
+            "message": (
+                "Authorization succeeded, but this tool "
+                "has no execution handler."
+            ),
+        }), 501
+
+    a = arguments["a"]
+    b = arguments["b"]
+    operation = arguments["operation"]
+
+    # Explicit allowlist: never use eval() or execute supplied code.
+    operations = {
+        "add": lambda x, y: x + y,
+        "subtract": lambda x, y: x - y,
+        "multiply": lambda x, y: x * y,
+        "divide": lambda x, y: x / y,
+    }
+
+    try:
+        result = operations[operation](a, b)
+    except (ArithmeticError, OverflowError):
+        return jsonify({
+            "decision": decision,
+            "executed": False,
+            "message": "Calculator operation failed.",
+        }), 422
+
+    if isinstance(result, float) and not math.isfinite(result):
+        return jsonify({
+            "decision": decision,
+            "executed": False,
+            "message": "Calculator result is not finite.",
+        }), 422
+
+    return jsonify({
+        "decision": decision,
+        "executed": True,
+        "result": result,
+        "message": "Calculator executed after authorization.",
+    }), 200
 
 # ==========================================
 # HISTORY PAGE

@@ -71,7 +71,8 @@ INJECTION_PATTERNS = {
     "Jailbreak": [
         r"\bdo\s+anything\s+now\b",
 
-        r"\bwithout\s+(?:any\s+)?"
+               r"\b(?:operate|function|respond|answer|act|behave|work)\s+"
+        r"(?:freely\s+)?without\s+(?:any\s+)?"
         r"(?:rules|restrictions|limitations|safeguards)\b",
 
         r"\benter\s+(?:developer|debug|jailbreak)\s+mode\b",
