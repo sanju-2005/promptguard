@@ -1,23 +1,24 @@
+
 import re
 
 
 PATTERNS = {
-
     "email": (
         r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
     ),
 
+    # Indian mobile numbers, optionally with +91 or 0 prefix.
     "phone": (
-        r"\b(?:\+91[-\s]?)?[6-9]\d{9}\b"
+        r"(?<!\d)(?:\+91[-\s]?|0)?[6-9]\d{9}(?!\d)"
     ),
 
     "credit_card": (
-        r"\b(?:\d{4}[-\s]?){3}\d{4}\b"
+        r"(?<!\d)(?:\d[ -]?){12,18}\d(?!\d)"
     ),
 
     "password": (
         r"(?i)\b(?:password|passwd|pwd)\b"
-        r"\s*(?:is|:|=)\s*\S+"
+        r"\s*(?:is|:|=)\s*[^\s,;]+"
     ),
 
     "api_key": (
@@ -25,7 +26,8 @@ PATTERNS = {
         r"sk-[A-Za-z0-9_-]{20,}|"
         r"AIza[A-Za-z0-9_-]{20,}|"
         r"AKIA[0-9A-Z]{16}|"
-        r"ghp_[A-Za-z0-9]{20,}"
+        r"gh[pousr]_[A-Za-z0-9]{20,}|"
+        r"xox[baprs]-[A-Za-z0-9-]{10,}"
         r")\b"
     ),
 
@@ -44,70 +46,48 @@ PATTERNS = {
     ),
 
     "aadhaar": (
-        r"\b\d{4}[-\s]\d{4}[-\s]\d{4}\b"
-    )
+        r"(?<!\d)\d{4}[- ]\d{4}[- ]\d{4}(?!\d)"
+    ),
 }
 
-
-# ==========================================
-# BANK ACCOUNT CONTEXT PATTERN
-# ==========================================
 
 BANK_ACCOUNT_PATTERN = (
     r"(?i)\b(?:"
     r"bank\s+account"
-    r"|account\s+number"
-    r"|account\s+no"
+    r"|account\s+(?:number|no\.?)"
     r"|a/c"
-    r"|ac\s+no"
+    r"|ac\s+no\.?"
     r")"
-    r"\s*(?:number|no\.?)?"
-    r"\s*(?:is|:|=|-)?"
-    r"\s*"
-    r"(\d{9,18})\b"
+    r"\s*(?:is|:|=|-)?\s*"
+    r"(\d{9,18})(?!\d)"
 )
 
 
 def detect_sensitive_data(text):
+    """Detect supported sensitive-data patterns in a prompt."""
+    if not isinstance(text, str) or not text:
+        return []
 
     detected = []
+    seen = set()
 
-    # ======================================
-    # STANDARD PATTERNS
-    # ======================================
+    def add_detection(data_type, value):
+        key = (data_type, value)
+        if key in seen:
+            return
 
-    for data_type, pattern in PATTERNS.items():
-
-        matches = re.findall(
-            pattern,
-            text
-        )
-
-        for match in matches:
-
-            detected.append({
-                "type": data_type,
-                "value": match,
-                "confidence": "HIGH"
-            })
-
-
-    # ======================================
-    # BANK ACCOUNT
-    # ======================================
-
-    bank_matches = re.findall(
-        BANK_ACCOUNT_PATTERN,
-        text
-    )
-
-    for match in bank_matches:
-
+        seen.add(key)
         detected.append({
-            "type": "bank_account",
-            "value": match,
-            "confidence": "HIGH"
+            "type": data_type,
+            "value": value,
+            "confidence": "HIGH",
         })
 
+    for data_type, pattern in PATTERNS.items():
+        for match in re.finditer(pattern, text):
+            add_detection(data_type, match.group(0))
+
+    for match in re.finditer(BANK_ACCOUNT_PATTERN, text):
+        add_detection("bank_account", match.group(1))
 
     return detected
