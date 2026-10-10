@@ -729,3 +729,27 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=int(os.getenv("PORT", 5000)),
     )
+# ==========================================
+# SECURITY ANALYTICS DASHBOARD
+# ==========================================
+
+@app.route("/analytics", methods=["GET"])
+def analytics_dashboard():
+    """Display the security evaluation analytics dashboard."""
+    return render_template("analytics.html")
+
+
+@app.route("/api/analytics", methods=["GET"])
+@limiter.limit("30 per minute")
+def api_analytics():
+    """Return freshly calculated evaluation metrics."""
+    try:
+        from backend.analytics import build_analytics_report
+
+        return jsonify(build_analytics_report())
+
+    except Exception:
+        app.logger.exception("Could not generate analytics report.")
+        return jsonify({
+            "error": "Could not generate analytics report."
+        }), 500
