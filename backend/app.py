@@ -11,6 +11,8 @@ from backend.risk_analyzer import analyze_risk
 from backend.injection_detector import detect_prompt_injection
 from backend.suggestions import generate_suggestions
 from backend.decision_engine import make_security_decision
+from backend.tool_guard import authorize_tool_call
+import hmac
 from backend.llm_router import LLMRouter
 from backend.prompt_optimizer import optimize_prompt
 from backend.token_analyzer import analyze_tokens
@@ -490,6 +492,72 @@ def health():
         "status": "healthy",
         "service": "PromptGuard AI",
     })
+
+
+# ==========================================
+# TOOL-CALL SECURITY AUTHORIZATION
+# ==========================================
+@app.route("/api/tools/authorize", methods=["POST"])
+@limiter.limit("20 per minute")
+def api_authorize_tool():
+    """Authorize a tool call without executing it."""
+
+    if not authenticate_request():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if not request.is_json:
+        return jsonify({"error": "Request must contain JSON."}), 400
+
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({"error": "Invalid JSON body."}), 400
+
+    tool_name = data.get("tool_name")
+    arguments = data.get("arguments", {})
+
+    if not isinstance(tool_name, str) or not tool_name.strip():
+        return jsonify({"error": "tool_name must be a non-empty string."}), 400
+
+    if not isinstance(arguments, dict):
+        return jsonify({"error": "arguments must be a JSON object."}), 400
+
+    # Permissions are configured on the server, never supplied by the caller.
+    configured_permissions = os.getenv(
+        "PROMPTGUARD_TOOL_PERMISSIONS",
+        "tool:calculator",
+    )
+    permissions = {
+        item.strip()
+        for item in configured_permissions.split(",")
+        if item.strip()
+    }
+
+    # Sensitive actions require a separately configured approval token.
+    approval_token = os.getenv("PROMPTGUARD_TOOL_APPROVAL_TOKEN", "")
+    provided_approval = request.headers.get("X-Tool-Approval", "")
+
+    approved = bool(approval_token) and hmac.compare_digest(
+        provided_approval,
+        approval_token,
+    )
+
+    decision = authorize_tool_call(
+        tool_name=tool_name,
+        arguments=arguments,
+        permissions=permissions,
+        approved=approved,
+    )
+
+    action = decision.get("action")
+    status_code = 403 if action == "BLOCK" else 200
+
+    return jsonify({
+        "decision": decision,
+        "executed": False,
+        "message": "Authorization check only; no tool was executed.",
+    }), status_code
+
 
 # ==========================================
 # HISTORY PAGE

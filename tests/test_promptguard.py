@@ -1,3 +1,4 @@
+from unittest.mock import Mock
 import sys
 import os
 import pytest
@@ -536,3 +537,56 @@ def test_email_risk_returns_sanitize_policy():
     assert result["action"] == "SANITIZE"
     assert result["rule_id"] == "PRIV-002"
     assert "masked" in result["reason"].lower()
+
+def test_blocked_prompt_never_reaches_llm(client, monkeypatch):
+    mock_generate = Mock()
+    monkeypatch.setattr(
+        app_module.llm_router,
+        "generate",
+        mock_generate,
+    )
+
+    response = client.post(
+        "/api/generate",
+        json={
+            "prompt": "My password is Secret123",
+            "provider": "groq",
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.get_json()["decision"]["action"] == "BLOCK"
+    mock_generate.assert_not_called()
+
+
+def test_sanitized_prompt_reaches_llm_without_original_email(
+    client, monkeypatch
+):
+    mock_generate = Mock(
+        return_value={
+            "provider": "groq",
+            "model": "test-model",
+            "response": "Test response",
+            "usage": {},
+        }
+    )
+    monkeypatch.setattr(
+        app_module.llm_router,
+        "generate",
+        mock_generate,
+    )
+
+    response = client.post(
+        "/api/generate",
+        json={
+            "prompt": "Contact me at test@example.com",
+            "provider": "groq",
+        },
+    )
+
+    assert response.status_code == 200
+    mock_generate.assert_called_once()
+
+    provider_prompt = mock_generate.call_args.kwargs["prompt"]
+    assert "test@example.com" not in provider_prompt
+    assert "[EMAIL_MASKED]" in provider_prompt
