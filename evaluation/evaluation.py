@@ -1,4 +1,6 @@
 
+import time
+
 from backend.detector import detect_sensitive_data
 from backend.injection_detector import detect_prompt_injection
 from backend.risk_analyzer import analyze_risk
@@ -145,6 +147,7 @@ def print_metrics(title, metrics):
     print()
     print(title)
     print("-" * 60)
+
     print(
         f"TP: {metrics['tp']} | TN: {metrics['tn']} | "
         f"FP: {metrics['fp']} | FN: {metrics['fn']}"
@@ -172,13 +175,18 @@ def evaluate():
     predicted_injection = []
 
     decision_correct = 0
+    latencies_ms = []
 
     print("=" * 60)
     print("PROMPTGUARD SECURITY EVALUATION")
+    print(f"Dataset size: {len(EVALUATION_DATASET)}")
     print("=" * 60)
 
     for case in EVALUATION_DATASET:
         prompt = case["prompt"]
+
+        # Measure local detection, risk analysis, and decision latency.
+        start_time = time.perf_counter()
 
         detected = detect_sensitive_data(prompt)
         injection = detect_prompt_injection(prompt)
@@ -188,6 +196,9 @@ def evaluate():
             injection.get("categories", []),
         )
         decision = make_security_decision(risk)
+
+        latency_ms = (time.perf_counter() - start_time) * 1000
+        latencies_ms.append(latency_ms)
 
         sensitive_found = len(detected) > 0
         injection_found = bool(injection.get("detected", False))
@@ -203,12 +214,13 @@ def evaluate():
 
         print()
         print(f"Test: {case['name']}")
-        print(f"Sensitive: {sensitive_found}")
-        print(f"Injection: {injection_found}")
-        print(f"Risk: {risk['overall_score']}/100")
+        print(f"Sensitive detected: {sensitive_found}")
+        print(f"Injection detected: {injection_found}")
+        print(f"Risk score: {risk['overall_score']}/100")
         print(f"Decision: {predicted_decision}")
         print(f"Expected decision: {case['decision']}")
         print(f"Decision match: {'YES' if matched else 'NO'}")
+        print(f"Pipeline latency: {latency_ms:.2f} ms")
 
     sensitive_metrics = binary_metrics(
         expected_sensitive, predicted_sensitive
@@ -220,6 +232,9 @@ def evaluate():
     decision_accuracy = (
         decision_correct / len(EVALUATION_DATASET) * 100
     )
+
+    average_latency = sum(latencies_ms) / len(latencies_ms)
+    maximum_latency = max(latencies_ms)
 
     print()
     print("=" * 60)
@@ -234,9 +249,15 @@ def evaluate():
         f"Decision Agreement: {decision_accuracy:.2f}% "
         f"({decision_correct}/{len(EVALUATION_DATASET)})"
     )
+    print(f"Average Pipeline Latency: {average_latency:.2f} ms")
+    print(f"Maximum Pipeline Latency: {maximum_latency:.2f} ms")
+
     print("=" * 60)
-    print("Note: Results apply only to this small labelled dataset.")
-    print("They do not establish real-world security performance.")
+    print("Evaluation limitations:")
+    print("- Results apply only to this small labelled dataset.")
+    print("- Latency excludes external LLM inference.")
+    print("- Results do not establish real-world security performance.")
+    print("=" * 60)
 
 
 if __name__ == "__main__":

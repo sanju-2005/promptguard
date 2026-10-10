@@ -466,3 +466,73 @@ def test_api_does_not_expose_sensitive_value(client):
     for item in data["risk"]["detected_details"]:
 
         assert "value" not in item
+        
+# ==========================================
+# EXPLAINABLE POLICY ENGINE TESTS
+# ==========================================
+
+def test_allow_decision_has_policy_explanation():
+    risk = {
+        "privacy_score": 0,
+        "security_score": 0,
+        "overall_score": 0,
+        "detected_details": [],
+    }
+
+    result = make_security_decision(risk)
+
+    assert result["action"] == "ALLOW"
+    assert result["policy_version"] == "2.0"
+    assert result["rule_id"] == "BASE-001"
+    assert result["severity"] == "LOW"
+    assert result["reason"]
+
+
+def test_security_threshold_blocks_with_explanation():
+    risk = {
+        "privacy_score": 0,
+        "security_score": 30,
+        "overall_score": 30,
+        "detected_details": [],
+    }
+
+    result = make_security_decision(risk)
+
+    assert result["action"] == "BLOCK"
+    assert result["rule_id"] == "SEC-001"
+    assert result["severity"] == "HIGH"
+    assert "30" in result["reason"]
+
+
+def test_password_block_has_policy_explanation():
+    risk = {
+        "privacy_score": 40,
+        "security_score": 0,
+        "overall_score": 40,
+        "detected_details": [
+            {"type": "password", "severity": "CRITICAL"}
+        ],
+    }
+
+    result = make_security_decision(risk)
+
+    assert result["action"] == "BLOCK"
+    assert result["rule_id"] == "PRIV-001"
+    assert result["severity"] == "CRITICAL"
+
+
+def test_email_risk_returns_sanitize_policy():
+    risk = {
+        "privacy_score": 15,
+        "security_score": 0,
+        "overall_score": 15,
+        "detected_details": [
+            {"type": "email", "severity": "LOW"}
+        ],
+    }
+
+    result = make_security_decision(risk)
+
+    assert result["action"] == "SANITIZE"
+    assert result["rule_id"] == "PRIV-002"
+    assert "masked" in result["reason"].lower()

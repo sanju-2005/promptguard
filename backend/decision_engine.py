@@ -1,20 +1,28 @@
 
+POLICY_VERSION = "2.0"
+
+SECURITY_BLOCK_THRESHOLD = 30
+
+BLOCKED_SENSITIVE_TYPES = {
+    "password",
+    "api_key",
+    "credential",
+    "credentials",
+    "jwt",
+}
+
+
 def make_security_decision(risk):
-    """Choose an action using calculated risk scores and detections."""
+    """Return an explainable, policy-based security decision."""
 
     if not isinstance(risk, dict):
         raise TypeError("Risk must be a dictionary.")
 
-    privacy_score = risk.get("privacy_score", 0)
-    security_score = risk.get("security_score", 0)
-    overall_score = risk.get("overall_score", 0)
-    detected_details = risk.get("detected_details", [])
+    scores = {}
 
-    for name, score in (
-        ("privacy_score", privacy_score),
-        ("security_score", security_score),
-        ("overall_score", overall_score),
-    ):
+    for name in ("privacy_score", "security_score", "overall_score"):
+        score = risk.get(name, 0)
+
         if (
             not isinstance(score, (int, float))
             or isinstance(score, bool)
@@ -24,45 +32,74 @@ def make_security_decision(risk):
                 f"{name} must be a number between 0 and 100."
             )
 
+        scores[name] = score
+
+    detected_details = risk.get("detected_details", [])
+
     if not isinstance(detected_details, list):
         raise TypeError("detected_details must be a list.")
 
-    # Block injection and high security risk.
-    if security_score >= 30:
+    def decision(action, rule_id, severity, reason):
         return {
-            "action": "BLOCK",
-            "reason": "Prompt injection or high security risk detected.",
+            "action": action,
+            "policy_version": POLICY_VERSION,
+            "rule_id": rule_id,
+            "severity": severity,
+            "reason": reason,
         }
 
-    blocked_types = {
-        "password",
-        "api_key",
-        "credential",
-        "credentials",
-        "jwt",
-    }
+    # Rule 1: Block prompts with high security risk.
+    if scores["security_score"] >= SECURITY_BLOCK_THRESHOLD:
+        return decision(
+            action="BLOCK",
+            rule_id="SEC-001",
+            severity="HIGH",
+            reason=(
+                f"Security risk score "
+                f"{scores['security_score']} meets or exceeds "
+                f"the blocking threshold of "
+                f"{SECURITY_BLOCK_THRESHOLD}."
+            ),
+        )
 
+    # Rule 2: Block highly sensitive credential types.
     for item in detected_details:
         if not isinstance(item, dict):
-            continue
+            raise ValueError(
+                "Each detected detail must be a dictionary."
+            )
 
         item_type = str(item.get("type", "")).lower()
         normalized_type = item_type.replace(" ", "_").replace("-", "_")
 
-        if normalized_type in blocked_types:
-            return {
-                "action": "BLOCK",
-                "reason": "Highly sensitive credential detected.",
-            }
+        if normalized_type in BLOCKED_SENSITIVE_TYPES:
+            return decision(
+                action="BLOCK",
+                rule_id="PRIV-001",
+                severity="CRITICAL",
+                reason=(
+                    f"Highly sensitive data of type "
+                    f"'{normalized_type}' was detected."
+                ),
+            )
 
-    # Sanitize other privacy risks.
-    if overall_score > 0 or privacy_score > 0:
-        return {
-            "action": "SANITIZE",
-            "reason": "Prompt contains privacy risk requiring sanitization.",
-        }
+    # Rule 3: Sanitize other detected privacy risks.
+    if scores["overall_score"] > 0 or scores["privacy_score"] > 0:
+        return decision(
+            action="SANITIZE",
+            rule_id="PRIV-002",
+            severity="MEDIUM",
+            reason=(
+                "Privacy risk was detected. Sensitive values "
+                "must be masked before the prompt is sent "
+                "to an AI provider."
+            ),
+        )
 
-    return {
-        "action": "ALLOW",
-        "reason": "No significant security risk detected.",
-    }
+    # Rule 4: Allow prompts with no detected risk.
+    return decision(
+        action="ALLOW",
+        rule_id="BASE-001",
+        severity="LOW",
+        reason="No risk was detected by the configured security checks.",
+    )
