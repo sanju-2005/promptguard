@@ -237,3 +237,53 @@ def test_password_is_blocked(client):
         "[PASSWORD_MASKED]"
         in data["masked"]
     )
+
+def test_blocked_password_never_calls_llm(client, monkeypatch):
+    def fail_if_called(*args, **kwargs):
+        pytest.fail("LLM provider was called for a blocked prompt")
+
+    monkeypatch.setattr(
+        app_module.llm_router,
+        "generate",
+        fail_if_called
+    )
+
+    response = client.post(
+        "/api/generate",
+        json={
+            "prompt": "My password is Secret123",
+            "provider": "groq"
+        }
+    )
+
+    assert response.status_code == 403
+
+    data = response.get_json()
+    assert data["decision"]["action"] == "BLOCK"
+
+def test_provider_receives_masked_email_not_original(client, monkeypatch):
+    captured = {}
+
+    def fake_generate(*, provider, prompt, temperature, max_tokens):
+        captured["prompt"] = prompt
+        return {"response": "Mock response"}
+
+    monkeypatch.setattr(
+        app_module.llm_router,
+        "generate",
+        fake_generate
+    )
+
+    secret_email = "person@example.com"
+
+    response = client.post(
+        "/api/generate",
+        json={
+            "prompt": f"Write a greeting for {secret_email}",
+            "provider": "groq"
+        }
+    )
+
+    assert secret_email not in captured["prompt"]
+    assert "[EMAIL_MASKED]" in captured["prompt"]
+    assert response.status_code == 200
